@@ -1,397 +1,195 @@
 <template>
   <div class="app-container">
-    <!-- Mobile Overlay -->
-    <div
-      v-if="isMobile && navOpen"
-      class="mobile-overlay"
-      @click="toggleNav"
-    ></div>
-
-    <!-- Side Navigation -->
-    <aside
-      class="side-nav"
-      :class="{
-        'nav-open': navOpen,
-        'nav-collapsed': !navOpen,
-        'mobile-nav': isMobile
-      }"
-    >
-      <!-- Logo Section -->
-      <div class="nav-header">
-        <div class="logo-container">
-          <div class="logo-icon">
-            <svg class="logo-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M2 17L12 22L22 17" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M2 12L12 17L22 12" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </div>
-          <div v-show="navOpen" class="logo-text">
-            <h2 class="logo-title">Self Study JO</h2>
-            <p class="logo-subtitle">E-Learning Platform</p>
-          </div>
+    <aside :class="['sidebar', { 'collapsed': isCollapsed }]">
+      <div class="sidebar-header">
+        <div class="logo" @click="toggleSidebar">
+          <div class="logo-icon">🎓</div>
+          <span v-if="!isCollapsed" class="logo-text">Self Study JO</span>
         </div>
-        <button
-          class="nav-toggle-btn"
-          @click="toggleNav"
-          :aria-label="navOpen ? 'Collapse menu' : 'Expand menu'"
-        >
-          <svg class="toggle-icon" :class="{ 'rotated': !navOpen }" viewBox="0 0 24 24" fill="none">
-            <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <button class="sidebar-toggle" @click="toggleSidebar">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M3 18H21V16H3V18ZM3 13H21V11H3V13ZM3 6V8H21V6H3Z" fill="currentColor"/>
           </svg>
         </button>
       </div>
 
-      <!-- Navigation Menu -->
-      <nav class="nav-menu">
-        <div class="menu-section">
-          <h3 v-show="navOpen" class="section-title">Main Menu</h3>
-          <ul class="nav-list">
-            <li v-for="item in mainMenu" :key="item.name">
-              <router-link
-                :to="item.path"
-                class="nav-item"
-                :class="{ 'active': $route.path === item.path }"
-                @click="handleMobileNav"
-              >
-                <div class="nav-icon">
-                  <component :is="item.icon" :size="20" />
-                </div>
-                <span v-show="navOpen" class="nav-label">{{ item.name }}</span>
-                <span v-if="item.badge && navOpen" class="nav-badge">{{ item.badge }}</span>
-              </router-link>
-            </li>
-          </ul>
-        </div>
-
-        <!-- Learning Section -->
-        <div class="menu-section">
-          <h3 v-show="navOpen" class="section-title">Learning</h3>
-          <ul class="nav-list">
-            <li v-for="item in learningMenu" :key="item.name">
-              <router-link
-                :to="item.path"
-                class="nav-item"
-                :class="{ 'active': $route.path === item.path }"
-                @click="handleMobileNav"
-              >
-                <div class="nav-icon">
-                  <component :is="item.icon" :size="20" />
-                </div>
-                <span v-show="navOpen" class="nav-label">{{ item.name }}</span>
-                <span v-if="item.progress && navOpen" class="progress-badge">
-                  {{ item.progress }}%
-                </span>
-              </router-link>
-            </li>
-          </ul>
-        </div>
-
-        <!-- Stats Section (Only when expanded) -->
-        <div v-show="navOpen" class="stats-section">
-          <div class="stats-card">
-            <div class="stat-item">
-              <div class="stat-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                <Clock :size="16" />
-              </div>
-              <div class="stat-info">
-                <p class="stat-value">42h 15m</p>
-                <p class="stat-label">Study Time</p>
-              </div>
-            </div>
-            <div class="stat-item">
-              <div class="stat-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
-                <Award :size="16" />
-              </div>
-              <div class="stat-info">
-                <p class="stat-value">24</p>
-                <p class="stat-label">Completed</p>
-              </div>
-            </div>
+      <nav class="sidebar-nav">
+        <router-link
+          v-for="item in navItems"
+          :key="item.to"
+          :to="item.to"
+          class="nav-item"
+          :class="{ 'active': isActive(item.to) }"
+        >
+          <div class="nav-icon">
+            <component :is="item.icon" />
           </div>
-        </div>
+          <span v-if="!isCollapsed" class="nav-text">{{ item.text }}</span>
+        </router-link>
       </nav>
 
-      <!-- User Profile -->
-      <div class="user-profile">
-        <div class="profile-avatar" @click="toggleProfileMenu">
-          <img
-            src="https://api.dicebear.com/7.x/avataaars/svg?seed=JO"
-            alt="User Avatar"
-            class="avatar-img"
-          />
-          <div v-show="navOpen" class="profile-status online"></div>
+      <div class="sidebar-footer">
+        <div class="user-profile">
+          <div class="avatar">
+            {{ userInitials }}
+          </div>
+          <div v-if="!isCollapsed" class="user-info">
+            <p class="username">{{ username }}</p>
+            <p class="email">{{ userEmail }}</p>
+          </div>
         </div>
-        <div v-show="navOpen" class="profile-info">
-          <h4 class="profile-name">John Doe</h4>
-          <p class="profile-email">john@selfstudy.com</p>
-        </div>
-        <button
-          v-show="navOpen"
-          class="logout-btn"
-          @click="logout"
-          aria-label="Logout"
-        >
-          <LogOut :size="18" />
+        <button class="logout-btn" @click="handleLogout">
+          <div class="logout-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M17 7L15.59 8.41L18.17 11H8V13H18.17L15.59 15.58L17 17L22 12L17 7ZM4 5H12V3H4C2.9 3 2 3.9 2 5V19C2 20.1 2.9 21 4 21H12V19H4V5Z" fill="currentColor"/>
+            </svg>
+          </div>
+          <span v-if="!isCollapsed">Logout</span>
         </button>
       </div>
     </aside>
 
-    <!-- Main Content -->
-    <main class="main-content" :class="{ 'expanded': !navOpen }">
-      <!-- Top Header -->
-      <header class="top-header">
-        <div class="header-left">
-          <button
-            class="mobile-menu-btn"
-            @click="toggleNav"
-            v-if="isMobile"
-          >
-            <Menu :size="24" />
-          </button>
-          <div class="breadcrumb">
-            <h1 class="page-title">{{ pageTitle }}</h1>
-            <nav class="breadcrumb-nav">
-              <router-link to="/" class="breadcrumb-item">Home</router-link>
-              <span class="breadcrumb-separator">/</span>
-              <span class="breadcrumb-item current">{{ pageTitle }}</span>
-            </nav>
-          </div>
-        </div>
-        <div class="header-right">
-          <button class="header-btn search-btn" aria-label="Search">
-            <Search :size="20" />
-          </button>
-          <button class="header-btn notification-btn" aria-label="Notifications">
-            <Bell :size="20" />
-            <span class="notification-badge">3</span>
-          </button>
-          <div class="theme-toggle">
-            <button class="theme-btn" @click="toggleTheme" aria-label="Toggle theme">
-              <Sun v-if="darkMode" :size="20" />
-              <Moon v-else :size="20" />
-            </button>
-          </div>
-        </div>
-      </header>
-
-      <!-- Page Content -->
-      <div class="content-container">
-        <router-view v-slot="{ Component }">
-          <transition name="fade" mode="out-in">
-            <component :is="Component" />
-          </transition>
-        </router-view>
-      </div>
+    <main class="main-content">
+      <router-view />
     </main>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import { useRoute } from 'vue-router'
-import {
-  Home as HomeIcon,
-  BookOpen,
-  BarChart3,
-  User,
-  FileText,
-  Video,
-  MessageSquare,
-  Settings,
-  LogOut,
-  Search,
-  Bell,
-  Sun,
-  Moon,
-  Clock,
-  Award,
-  Menu
-} from 'lucide-vue-next'
+import { ref, computed } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { useAuthStore } from '@/store/auth';
 
-const route = useRoute()
-const navOpen = ref(true)
-const darkMode = ref(false)
-const isMobile = ref(false)
-const profileMenuOpen = ref(false)
+// Icons components
+const DashboardIcon = {
+  template: `
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <path d="M3 13H11V3H3V13ZM3 21H11V15H3V21ZM13 21H21V11H13V21ZM13 3V9H21V3H13Z" fill="currentColor"/>
+    </svg>
+  `
+};
 
-// Navigation items
-const mainMenu = [
-  { name: 'Dashboard', path: '/', icon: HomeIcon },
-  { name: 'Courses', path: '/courses', icon: BookOpen, badge: '5' },
-  { name: 'Progress', path: '/progress', icon: BarChart3 },
-  { name: 'Profile', path: '/profile', icon: User }
-]
+const CoursesIcon = {
+  template: `
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <path d="M12 2L2 7L12 12L22 7L12 2ZM2 17L12 22L22 17M2 12L12 17L22 12" stroke="currentColor" stroke-width="2"/>
+    </svg>
+  `
+};
 
-const learningMenu = [
-  { name: 'My Courses', path: '/my-courses', icon: FileText, progress: 75 },
-  { name: 'Live Sessions', path: '/sessions', icon: Video, progress: 30 },
-  { name: 'Discussions', path: '/discussions', icon: MessageSquare },
-  { name: 'Settings', path: '/settings', icon: Settings }
-]
+const ProgressIcon = {
+  template: `
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <path d="M9 12L11 14L15 10M12 2C13.3132 2 14.6136 2.25866 15.8268 2.7612C17.0401 3.26375 18.1425 4.00035 19.0711 4.92893C19.9997 5.85752 20.7362 6.95991 21.2388 8.17317C21.7413 9.38642 22 10.6868 22 12C22 13.3132 21.7413 14.6136 21.2388 15.8268C20.7362 17.0401 19.9997 18.1425 19.0711 19.0711C18.1425 19.9997 17.0401 20.7362 15.8268 21.2388C14.6136 21.7413 13.3132 22 12 22C10.6868 22 9.38642 21.7413 8.17317 21.2388C6.95991 20.7362 5.85752 19.9997 4.92893 19.0711C4.00035 18.1425 3.26375 17.0401 2.7612 15.8268C2.25866 14.6136 2 13.3132 2 12C2 9.34784 3.05357 6.8043 4.92893 4.92893C6.8043 3.05357 9.34784 2 12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  `
+};
 
-// Computed page title
-const pageTitle = computed(() => {
-  return route.meta?.title || 'Self Study JO'
-})
+const ProfileIcon = {
+  template: `
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <path d="M12 12C14.21 12 16 10.21 16 8C16 5.79 14.21 4 12 4C9.79 4 8 5.79 8 8C8 10.21 9.79 12 12 12ZM12 14C9.33 14 4 15.34 4 18V20H20V18C20 15.34 14.67 14 12 14Z" fill="currentColor"/>
+    </svg>
+  `
+};
 
-// Toggle navigation
-const toggleNav = () => {
-  navOpen.value = !navOpen.value
-  localStorage.setItem('navState', JSON.stringify(navOpen.value))
-}
+const route = useRoute();
+const router = useRouter();
+const authStore = useAuthStore();
 
-// Handle mobile navigation
-const handleMobileNav = () => {
-  if (isMobile.value && navOpen.value) {
-    navOpen.value = false
+const isCollapsed = ref(false);
+
+const navItems = [
+  { to: '/', text: 'Dashboard', icon: DashboardIcon },
+  { to: '/courses', text: 'Courses', icon: CoursesIcon },
+  { to: '/progress', text: 'Progress', icon: ProgressIcon },
+  { to: '/profile', text: 'Profile', icon: ProfileIcon },
+];
+
+const isActive = (path: string) => {
+  return route.path === path;
+};
+
+const toggleSidebar = () => {
+  isCollapsed.value = !isCollapsed.value;
+};
+
+const username = computed(() => {
+  const user = authStore.user;
+  if (user && user.username) {
+    return user.username;
   }
-}
+  return 'Guest';
+});
 
-// Toggle theme
-const toggleTheme = () => {
-  darkMode.value = !darkMode.value
-  document.documentElement.classList.toggle('dark-mode', darkMode.value)
-  localStorage.setItem('darkMode', JSON.stringify(darkMode.value))
-}
-
-// Toggle profile menu
-const toggleProfileMenu = () => {
-  profileMenuOpen.value = !profileMenuOpen.value
-}
-
-// Logout function
-const logout = () => {
-  console.log('Logging out...')
-  // Implement logout logic
-}
-
-// Handle responsive behavior
-const checkScreenSize = () => {
-  isMobile.value = window.innerWidth < 1024
-  if (isMobile.value) {
-    navOpen.value = false
-  } else {
-    // Restore saved state on desktop
-    const savedState = localStorage.getItem('navState')
-    if (savedState !== null) {
-      navOpen.value = JSON.parse(savedState)
-    }
+const userEmail = computed(() => {
+  const user = authStore.user;
+  if (user && user.email) {
+    return user.email;
   }
-}
+  return 'user@example.com';
+});
 
-// Initialize from localStorage
-const initializeFromStorage = () => {
-  const savedDarkMode = localStorage.getItem('darkMode')
-  if (savedDarkMode !== null) {
-    darkMode.value = JSON.parse(savedDarkMode)
-    document.documentElement.classList.toggle('dark-mode', darkMode.value)
+const userInitials = computed(() => {
+  const name = username.value;
+  return name
+    .split(' ')
+    .map(word => word[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+});
+
+const handleLogout = async () => {
+  try {
+    await authStore.logout();
+    router.push('/login');
+  } catch (error) {
+    console.error('Logout failed:', error);
   }
-}
-
-// Lifecycle hooks
-onMounted(() => {
-  initializeFromStorage()
-  checkScreenSize()
-  window.addEventListener('resize', checkScreenSize)
-})
-
-onUnmounted(() => {
-  window.removeEventListener('resize', checkScreenSize)
-})
-
-// Watch for route changes on mobile
-watch(() => route.path, () => {
-  if (isMobile.value) {
-    navOpen.value = false
-  }
-})
+};
 </script>
 
 <style scoped>
 .app-container {
   display: flex;
   min-height: 100vh;
-  background: linear-gradient(135deg, #f5f7fa 0%, #e4edf5 100%);
-  position: relative;
+  background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
 }
 
-.dark-mode .app-container {
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-}
-
-/* Side Navigation Styles */
-.side-nav {
-  position: fixed;
-  top: 0;
-  left: 0;
-  height: 100vh;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px);
-  border-right: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.1);
-  z-index: 1000;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  overflow-y: auto;
-  overflow-x: hidden;
-}
-
-.dark-mode .side-nav {
-  background: rgba(26, 26, 46, 0.95);
-  border-right: 1px solid rgba(255, 255, 255, 0.05);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-}
-
-.nav-open {
+.sidebar {
   width: 280px;
+  background: white;
+  border-right: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.3s ease;
+  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.05);
+  z-index: 100;
 }
 
-.nav-collapsed {
+.sidebar.collapsed {
   width: 80px;
 }
 
-.mobile-nav {
-  transform: translateX(-100%);
-}
-
-.mobile-nav.nav-open {
-  transform: translateX(0);
-}
-
-.mobile-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-  z-index: 999;
-  animation: fadeIn 0.3s ease;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.nav-header {
-  padding: 24px 20px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+.sidebar-header {
+  padding: 24px;
+  border-bottom: 1px solid #e2e8f0;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  position: relative;
 }
 
-.dark-mode .nav-header {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.logo-container {
+.logo {
   display: flex;
   align-items: center;
   gap: 12px;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.logo:hover {
+  transform: scale(1.05);
 }
 
 .logo-icon {
@@ -402,131 +200,75 @@ watch(() => route.path, () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
-}
-
-.logo-svg {
-  width: 24px;
-  height: 24px;
+  font-size: 24px;
   color: white;
+  flex-shrink: 0;
 }
 
 .logo-text {
-  animation: slideIn 0.3s ease;
-}
-
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateX(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-.logo-title {
-  font-size: 1.25rem;
+  font-size: 20px;
   font-weight: 700;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  margin: 0;
+  color: #1a202c;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.logo-subtitle {
-  font-size: 0.75rem;
-  color: #666;
-  margin: 2px 0 0 0;
+.sidebar.collapsed .logo-text {
+  display: none;
 }
 
-.dark-mode .logo-subtitle {
-  color: #aaa;
-}
-
-.nav-toggle-btn {
-  width: 32px;
-  height: 32px;
+.sidebar-toggle {
+  width: 40px;
+  height: 40px;
+  background: #f7fafc;
+  border: 1px solid #e2e8f0;
   border-radius: 8px;
-  border: none;
-  background: rgba(102, 126, 234, 0.1);
-  color: #667eea;
-  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
+  color: #4a5568;
   transition: all 0.3s ease;
-  flex-shrink: 0;
 }
 
-.nav-toggle-btn:hover {
-  background: rgba(102, 126, 234, 0.2);
-  transform: scale(1.05);
+.sidebar-toggle:hover {
+  background: #edf2f7;
+  color: #667eea;
 }
 
-.toggle-icon {
-  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.toggle-icon.rotated {
+.sidebar.collapsed .sidebar-toggle svg {
   transform: rotate(180deg);
 }
 
-.nav-menu {
+.sidebar-nav {
+  flex: 1;
   padding: 24px 16px;
-  flex-grow: 1;
-}
-
-.menu-section {
-  margin-bottom: 24px;
-}
-
-.section-title {
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  color: #888;
-  margin: 0 0 12px 16px;
-  font-weight: 600;
-}
-
-.dark-mode .section-title {
-  color: #aaa;
-}
-
-.nav-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .nav-item {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
   padding: 14px 16px;
   border-radius: 12px;
-  color: #555;
+  color: #4a5568;
   text-decoration: none;
   transition: all 0.3s ease;
-  margin-bottom: 4px;
-  position: relative;
-}
-
-.dark-mode .nav-item {
-  color: #ccc;
+  white-space: nowrap;
 }
 
 .nav-item:hover {
-  background: rgba(102, 126, 234, 0.1);
-  transform: translateX(4px);
+  background: #f7fafc;
+  color: #667eea;
 }
 
 .nav-item.active {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
 }
 
 .nav-icon {
@@ -538,447 +280,152 @@ watch(() => route.path, () => {
   flex-shrink: 0;
 }
 
-.nav-label {
-  flex-grow: 1;
-  font-size: 0.95rem;
+.nav-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.nav-text {
+  font-size: 16px;
   font-weight: 500;
-  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.nav-badge {
-  background: #ff4757;
-  color: white;
-  font-size: 0.7rem;
-  padding: 2px 8px;
-  border-radius: 10px;
-  font-weight: 600;
+.sidebar.collapsed .nav-text {
+  display: none;
 }
 
-.progress-badge {
-  background: rgba(46, 213, 115, 0.2);
-  color: #2ed573;
-  font-size: 0.7rem;
-  padding: 2px 8px;
-  border-radius: 10px;
-  font-weight: 600;
-}
-
-.stats-section {
-  padding: 20px;
-  background: rgba(255, 255, 255, 0.5);
-  border-radius: 16px;
-  margin: 24px 0;
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.dark-mode .stats-section {
-  background: rgba(255, 255, 255, 0.05);
-}
-
-.stats-card {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.stat-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.stat-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-}
-
-.stat-info {
-  flex-grow: 1;
-}
-
-.stat-value {
-  font-size: 1.1rem;
-  font-weight: 700;
-  margin: 0;
-  color: #333;
-}
-
-.dark-mode .stat-value {
-  color: #fff;
-}
-
-.stat-label {
-  font-size: 0.8rem;
-  color: #666;
-  margin: 2px 0 0 0;
-}
-
-.dark-mode .stat-label {
-  color: #aaa;
+.sidebar-footer {
+  padding: 24px 16px;
+  border-top: 1px solid #e2e8f0;
 }
 
 .user-profile {
-  padding: 20px;
-  border-top: 1px solid rgba(0, 0, 0, 0.05);
   display: flex;
   align-items: center;
   gap: 12px;
+  margin-bottom: 20px;
 }
 
-.dark-mode .user-profile {
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.profile-avatar {
-  position: relative;
-  cursor: pointer;
-}
-
-.avatar-img {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 3px solid #667eea;
-}
-
-.profile-status {
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  border: 2px solid white;
-}
-
-.profile-status.online {
-  background: #2ed573;
-}
-
-.profile-info {
-  flex-grow: 1;
-  overflow: hidden;
-  animation: slideIn 0.3s ease;
-}
-
-.profile-name {
-  font-size: 0.95rem;
-  font-weight: 600;
-  margin: 0;
-  color: #333;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.dark-mode .profile-name {
-  color: #fff;
-}
-
-.profile-email {
-  font-size: 0.75rem;
-  color: #666;
-  margin: 2px 0 0 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.dark-mode .profile-email {
-  color: #aaa;
-}
-
-.logout-btn {
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  border: none;
-  background: rgba(255, 71, 87, 0.1);
-  color: #ff4757;
-  cursor: pointer;
+.avatar {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 18px;
+  font-weight: 600;
+  color: white;
+  flex-shrink: 0;
+}
+
+.user-info {
+  overflow: hidden;
+}
+
+.username {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a202c;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.email {
+  font-size: 14px;
+  color: #718096;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar.collapsed .user-info {
+  display: none;
+}
+
+.logout-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: #fed7d7;
+  color: #c53030;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .logout-btn:hover {
-  background: rgba(255, 71, 87, 0.2);
-  transform: scale(1.05);
-}
-
-/* Main Content Styles */
-.main-content {
-  flex-grow: 1;
-  margin-left: 280px;
-  transition: margin-left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-
-.main-content.expanded {
-  margin-left: 80px;
-}
-
-@media (max-width: 1024px) {
-  .main-content {
-    margin-left: 0 !important;
-    width: 100%;
-  }
-}
-
-.top-header {
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(10px);
-  padding: 20px 32px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-}
-
-.dark-mode .top-header {
-  background: rgba(26, 26, 46, 0.9);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-}
-
-.mobile-menu-btn {
-  display: none;
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  border: none;
-  background: rgba(102, 126, 234, 0.1);
-  color: #667eea;
-  cursor: pointer;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s ease;
-}
-
-@media (max-width: 1024px) {
-  .mobile-menu-btn {
-    display: flex;
-  }
-}
-
-.mobile-menu-btn:hover {
-  background: rgba(102, 126, 234, 0.2);
-}
-
-.breadcrumb {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.page-title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  margin: 0;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.dark-mode .page-title {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.breadcrumb-nav {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.875rem;
-}
-
-.breadcrumb-item {
-  color: #666;
-  text-decoration: none;
-  transition: color 0.3s ease;
-}
-
-.dark-mode .breadcrumb-item {
-  color: #aaa;
-}
-
-.breadcrumb-item:hover {
-  color: #667eea;
-}
-
-.breadcrumb-item.current {
-  color: #333;
-  font-weight: 500;
-}
-
-.dark-mode .breadcrumb-item.current {
-  color: #fff;
-}
-
-.breadcrumb-separator {
-  color: #999;
-}
-
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.header-btn {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  border: none;
-  background: rgba(0, 0, 0, 0.05);
-  color: #555;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s ease;
-  position: relative;
-}
-
-.dark-mode .header-btn {
-  background: rgba(255, 255, 255, 0.1);
-  color: #ccc;
-}
-
-.header-btn:hover {
-  background: rgba(102, 126, 234, 0.1);
-  color: #667eea;
-  transform: translateY(-2px);
-}
-
-.notification-badge {
-  position: absolute;
-  top: -4px;
-  right: -4px;
-  width: 18px;
-  height: 18px;
-  background: #ff4757;
+  background: #fc8181;
   color: white;
-  font-size: 0.6rem;
-  border-radius: 50%;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(252, 129, 129, 0.3);
+}
+
+.logout-icon {
+  width: 20px;
+  height: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 600;
 }
 
-.theme-toggle {
-  margin-left: 8px;
+.logout-icon svg {
+  width: 100%;
+  height: 100%;
 }
 
-.theme-btn {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  border: none;
-  background: rgba(0, 0, 0, 0.05);
-  color: #555;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
+.sidebar.collapsed .logout-btn span {
+  display: none;
+}
+
+.sidebar.collapsed .logout-btn {
   justify-content: center;
-  transition: all 0.3s ease;
+  padding: 14px;
 }
 
-.dark-mode .theme-btn {
-  background: rgba(255, 255, 255, 0.1);
-  color: #ccc;
-}
-
-.theme-btn:hover {
-  background: rgba(255, 193, 7, 0.2);
-  color: #ffc107;
-  transform: rotate(15deg);
-}
-
-.content-container {
-  flex-grow: 1;
-  padding: 32px;
+.main-content {
+  flex: 1;
   overflow-y: auto;
+  padding: 0;
 }
 
-/* Page Transition */
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.3s ease, transform 0.3s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-  transform: translateY(10px);
-}
-
-/* Scrollbar Styling */
-.side-nav::-webkit-scrollbar,
-.content-container::-webkit-scrollbar {
-  width: 6px;
-}
-
-.side-nav::-webkit-scrollbar-track,
-.content-container::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.side-nav::-webkit-scrollbar-thumb,
-.content-container::-webkit-scrollbar-thumb {
-  background: rgba(102, 126, 234, 0.3);
-  border-radius: 3px;
-}
-
-.side-nav::-webkit-scrollbar-thumb:hover,
-.content-container::-webkit-scrollbar-thumb:hover {
-  background: rgba(102, 126, 234, 0.5);
-}
-
-/* Responsive Design */
 @media (max-width: 768px) {
-  .nav-open {
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    transform: translateX(-100%);
+    z-index: 1000;
+  }
+
+  .sidebar.collapsed {
+    transform: translateX(0);
+    width: 280px;
+  }
+
+  .main-content {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .sidebar.collapsed {
     width: 100%;
-    max-width: 320px;
   }
 
-  .content-container {
-    padding: 20px;
-  }
-
-  .top-header {
-    padding: 16px 20px;
-  }
-
-  .header-right {
-    gap: 8px;
-  }
-
-  .header-btn {
-    width: 36px;
-    height: 36px;
+  .logo-text {
+    font-size: 18px;
   }
 }
 </style>
