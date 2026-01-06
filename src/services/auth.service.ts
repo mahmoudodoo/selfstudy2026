@@ -14,6 +14,8 @@ export interface LoginResponse {
     requires_verification?: boolean;
     verification_domain?: string;
     user_profile_domain?: string;
+    username?: string;
+    email?: string;
 }
 
 export interface TokenVerification {
@@ -63,15 +65,25 @@ class AuthService {
     async login(credentials: LoginRequest): Promise<LoginResponse> {
         const baseUrl = await serviceRegistry.getRandomAuthReplica();
         if (!baseUrl) {
-            throw new Error('No auth service replicas available');
+            throw new Error('Authentication service is currently unavailable. Please try again later.');
         }
 
         try {
+            console.log('Attempting login with credentials:', {
+                ...credentials,
+                password: '[HIDDEN]'
+            });
+
             const response = await apiService.post<LoginResponse>(
                 baseUrl,
                 '/api/login/',
                 credentials
             );
+
+            console.log('Login response received:', {
+                ...response,
+                token: response.token ? `${response.token.substring(0, 8)}...` : 'No token'
+            });
 
             if (response.token) {
                 this.setToken(response.token);
@@ -79,20 +91,39 @@ class AuthService {
                     id: response.user_id,
                     token: response.token,
                     expiresAt: response.expires_at,
+                    username: response.username,
+                    email: response.email
                 });
             }
 
             return response;
-        } catch (error) {
+        } catch (error: any) {
             console.error('Login failed:', error);
-            throw error;
+
+            // Provide user-friendly error messages
+            if (error.status === 401) {
+                throw new Error('Invalid username or password. Please check your credentials.');
+            } else if (error.status === 403 && error.data?.requires_verification) {
+                // This is not an error, it's a verification required response
+                return error.data;
+            } else if (error.status === 503) {
+                throw new Error('Service is temporarily unavailable. Please try again later.');
+            } else if (error.status === 400) {
+                throw new Error('Invalid request. Please check your input.');
+            } else if (error.message?.includes('Network error')) {
+                throw new Error('Network error. Please check your internet connection.');
+            } else {
+                throw new Error(error.message || 'Login failed. Please try again.');
+            }
         }
     }
 
     async logout(token: string): Promise<LogoutResponse> {
         const baseUrl = await serviceRegistry.getRandomAuthReplica();
         if (!baseUrl) {
-            throw new Error('No auth service replicas available');
+            // Still clear local auth even if server is unavailable
+            this.clearAuth();
+            return { message: 'Logged out locally (service unavailable)' };
         }
 
         try {
@@ -105,16 +136,16 @@ class AuthService {
             this.clearAuth();
             return response;
         } catch (error) {
-            console.error('Logout failed:', error);
+            console.error('Logout API call failed:', error);
             this.clearAuth(); // Clear local auth even if server logout fails
-            throw error;
+            return { message: 'Logged out locally' };
         }
     }
 
     async verifyToken(token: string, userId?: string): Promise<TokenVerification> {
         const baseUrl = await serviceRegistry.getRandomAuthReplica();
         if (!baseUrl) {
-            throw new Error('No auth service replicas available');
+            throw new Error('Authentication service unavailable');
         }
 
         const data: any = { token };
@@ -137,10 +168,11 @@ class AuthService {
     async validateToken(token: string): Promise<TokenValidationResponse> {
         const baseUrl = await serviceRegistry.getRandomAuthReplica();
         if (!baseUrl) {
-            throw new Error('No auth service replicas available');
+            throw new Error('Authentication service unavailable');
         }
 
         try {
+            // First try POST request
             return await apiService.post<TokenValidationResponse>(
                 baseUrl,
                 '/api/external/tokens/validate/',
@@ -150,7 +182,44 @@ class AuthService {
                     check_active: true,
                 }
             );
-        } catch (error) {
+        } catch (error: any) {
+            // If POST fails, try GET request as fallback
+            if (error.status === 405 || error.status === 404) {
+                try {
+                    console.warn('POST validation failed, trying GET fallback');
+                    return await apiService.get<TokenValidationResponse>(
+                        baseUrl,
+                        `/api/external/tokens/validate/?token=${token}&check_expiry=true&check_active=true`
+                    );
+                } catch (getError) {
+                    // If GET also fails, fall back to regular verify-token
+                    console.warn('External validation endpoints failed, falling back to verify-token');
+                    const verification = await this.verifyToken(token);
+                    return {
+                        token,
+                        user_id: verification.user_id,
+                        is_valid: verification.valid,
+                        validation_details: {
+                            expired: !verification.valid,
+                            active: verification.valid,
+                            checks_performed: {
+                                expiry: true,
+                                active: true
+                            },
+                            errors: verification.valid ? [] : ['Token expired or invalid']
+                        },
+                        metadata: {
+                            created_at: new Date().toISOString(),
+                            expires_at: verification.expires_at,
+                            ip_address: undefined,
+                            user_agent: undefined,
+                            time_remaining_seconds: 0,
+                            time_remaining_days: 0,
+                            age_days: 0
+                        }
+                    };
+                }
+            }
             console.error('Token validation failed:', error);
             throw error;
         }
@@ -187,11 +256,17 @@ class AuthService {
     }
 
     async checkAndRefreshAuth(): Promise<boolean> {
-        const authenticated = await this.isAuthenticated();
-        if (!authenticated) {
+        try {
+            const authenticated = await this.isAuthenticated();
+            if (!authenticated) {
+                this.clearAuth();
+            }
+            return authenticated;
+        } catch (error) {
+            console.error('Auth check failed:', error);
             this.clearAuth();
+            return false;
         }
-        return authenticated;
     }
 
     // Token management
@@ -203,11 +278,23 @@ class AuthService {
         return localStorage.getItem(this.tokenKey);
     }
 
-    setUser(user: { id: string; token: string; expiresAt: string }): void {
+    setUser(user: {
+        id: string;
+        token: string;
+        expiresAt: string;
+        username?: string;
+        email?: string;
+    }): void {
         localStorage.setItem(this.userKey, JSON.stringify(user));
     }
 
-    getUser(): { id: string; token: string; expiresAt: string } | null {
+    getUser(): {
+        id: string;
+        token: string;
+        expiresAt: string;
+        username?: string;
+        email?: string;
+    } | null {
         const userStr = localStorage.getItem(this.userKey);
         return userStr ? JSON.parse(userStr) : null;
     }

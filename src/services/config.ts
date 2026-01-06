@@ -16,7 +16,7 @@ export interface AppDetails {
 }
 
 class ServiceRegistry {
-    private AUTH_TOKEN = import.meta.env.VITE_AUTH_TOKEN;
+    private AUTH_TOKEN = import.meta.env.VITE_AUTH_TOKEN || 'Token Not Found!';
     private registryDomains = [
         import.meta.env.VITE_API_BASE_REGISTRY,
         import.meta.env.VITE_REGISTRY_ALT,
@@ -26,10 +26,17 @@ class ServiceRegistry {
     private CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
     private getHeaders() {
-        return {
+        const headers: Record<string, string> = {
             'Content-Type': 'application/json',
-            'Authorization': `Token ${this.AUTH_TOKEN}`,
         };
+
+        if (this.AUTH_TOKEN && this.AUTH_TOKEN !== 'Token Not Found!') {
+            headers['Authorization'] = `Token ${this.AUTH_TOKEN}`;
+        } else {
+            console.error('AUTH_TOKEN is not set or invalid in environment variables');
+        }
+
+        return headers;
     }
 
     async getServiceReplicas(appId: number, serviceName: string): Promise<string[]> {
@@ -55,7 +62,7 @@ class ServiceRegistry {
                 if (response.ok) {
                     const data: AppDetails = await response.json();
                     const replicas = data.replicas
-                    .map(replica => replica.replica_url.trim().replace(/\/$/, ''))
+                    .map(replica => replica.replica_url?.trim().replace(/\/$/, '') || '')
                     .filter(url => url && url.startsWith('http'));
 
                     console.log(`Found ${replicas.length} replicas for ${serviceName}:`, replicas);
@@ -67,6 +74,8 @@ class ServiceRegistry {
                     });
 
                     return replicas;
+                } else {
+                    console.warn(`Failed to fetch from ${registryDomain}: ${response.status} ${response.statusText}`);
                 }
             } catch (error) {
                 console.warn(`Failed to fetch from ${registryDomain}:`, error);
@@ -86,7 +95,7 @@ class ServiceRegistry {
 
     async getRandomAuthReplica(): Promise<string | null> {
         const replicas = await this.getServiceReplicas(
-            parseInt(import.meta.env.VITE_AUTH_APP_ID),
+            parseInt(import.meta.env.VITE_AUTH_APP_ID || '15'),
                                                        'auth'
         );
         return this.getRandomReplica(replicas);
@@ -94,7 +103,7 @@ class ServiceRegistry {
 
     async getRandomUserProfileReplica(): Promise<string | null> {
         const replicas = await this.getServiceReplicas(
-            parseInt(import.meta.env.VITE_USERPROFILE_APP_ID),
+            parseInt(import.meta.env.VITE_USERPROFILE_APP_ID || '13'),
                                                        'userprofile'
         );
         return this.getRandomReplica(replicas);
@@ -102,7 +111,7 @@ class ServiceRegistry {
 
     async getRandomOtpReplica(): Promise<string | null> {
         const replicas = await this.getServiceReplicas(
-            parseInt(import.meta.env.VITE_OTP_APP_ID),
+            parseInt(import.meta.env.VITE_OTP_APP_ID || '14'),
                                                        'otp'
         );
         return this.getRandomReplica(replicas);

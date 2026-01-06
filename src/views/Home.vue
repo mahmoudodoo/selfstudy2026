@@ -5,14 +5,15 @@
         <h1>Welcome to Self Study JO</h1>
         <p class="subtitle">Your personalized learning journey starts here</p>
       </div>
-      <div class="user-info">
-        <span class="welcome">Welcome, {{ username }}</span>
-        <button @click="handleLogout" class="btn-logout">
-          <span>Logout</span>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-            <path d="M17 7L15.59 8.41L18.17 11H8V13H18.17L15.59 15.58L17 17L22 12L17 7ZM4 5H12V3H4C2.9 3 2 3.9 2 5V19C2 20.1 2.9 21 4 21H12V19H4V5Z" fill="currentColor"/>
-          </svg>
-        </button>
+      <div class="quick-stats">
+        <div class="stat-item">
+          <span class="stat-label">Active Courses</span>
+          <span class="stat-value">{{ stats.courses }}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Study Streak</span>
+          <span class="stat-value">{{ stats.streak }} days</span>
+        </div>
       </div>
     </header>
 
@@ -35,9 +36,7 @@
         <div class="stat-card">
           <div class="stat-icon">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
-              <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="currentColor"/>
-              <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2"/>
-              <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2"/>
+              <path d="M9 12L11 14L15 10M12 2C13.3132 2 14.6136 2.25866 15.8268 2.7612C17.0401 3.26375 18.1425 4.00035 19.0711 4.92893C19.9997 5.85752 20.7362 6.95991 21.2388 8.17317C21.7413 9.38642 22 10.6868 22 12C22 13.3132 21.7413 14.6136 21.2388 15.8268C20.7362 17.0401 19.9997 18.1425 19.0711 19.0711C18.1425 19.9997 17.0401 20.7362 15.8268 21.2388C14.6136 21.7413 13.3132 22 12 22C10.6868 22 9.38642 21.7413 8.17317 21.2388C6.95991 20.7362 5.85752 19.9997 4.92893 19.0711C4.00035 18.1425 3.26375 17.0401 2.7612 15.8268C2.25866 14.6136 2 13.3132 2 12C2 9.34784 3.05357 6.8043 4.92893 4.92893C6.8043 3.05357 9.34784 2 12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </div>
           <div class="stat-content">
@@ -49,7 +48,9 @@
         <div class="stat-card">
           <div class="stat-icon">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
-              <path d="M9 12L11 14L15 10M12 2C13.3132 2 14.6136 2.25866 15.8268 2.7612C17.0401 3.26375 18.1425 4.00035 19.0711 4.92893C19.9997 5.85752 20.7362 6.95991 21.2388 8.17317C21.7413 9.38642 22 10.6868 22 12C22 13.3132 21.7413 14.6136 21.2388 15.8268C20.7362 17.0401 19.9997 18.1425 19.0711 19.0711C18.1425 19.9997 17.0401 20.7362 15.8268 21.2388C14.6136 21.7413 13.3132 22 12 22C10.6868 22 9.38642 21.7413 8.17317 21.2388C6.95991 20.7362 5.85752 19.9997 4.92893 19.0711C4.00035 18.1425 3.26375 17.0401 2.7612 15.8268C2.25866 14.6136 2 13.3132 2 12C2 9.34784 3.05357 6.8043 4.92893 4.92893C6.8043 3.05357 9.34784 2 12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="currentColor"/>
+              <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2"/>
+              <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2"/>
             </svg>
           </div>
           <div class="stat-content">
@@ -93,7 +94,7 @@
         <div class="content-card">
           <h2>Quick Actions</h2>
           <div class="actions-grid">
-            <button @click="navigateTo('courses')" class="action-btn">
+            <router-link to="/courses" class="action-btn">
               <div class="action-icon">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
                   <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="currentColor"/>
@@ -102,25 +103,25 @@
                 </svg>
               </div>
               <span>Browse Courses</span>
-            </button>
+            </router-link>
 
-            <button @click="navigateTo('progress')" class="action-btn">
+            <router-link to="/progress" class="action-btn">
               <div class="action-icon">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
                   <path d="M9 12L11 14L15 10M12 2C13.3132 2 14.6136 2.25866 15.8268 2.7612C17.0401 3.26375 18.1425 4.00035 19.0711 4.92893C19.9997 5.85752 20.7362 6.95991 21.2388 8.17317C21.7413 9.38642 22 10.6868 22 12C22 13.3132 21.7413 14.6136 21.2388 15.8268C20.7362 17.0401 19.9997 18.1425 19.0711 19.0711C18.1425 19.9997 17.0401 20.7362 15.8268 21.2388C14.6136 21.7413 13.3132 22 12 22C10.6868 22 9.38642 21.7413 8.17317 21.2388C6.95991 20.7362 5.85752 19.9997 4.92893 19.0711C4.00035 18.1425 3.26375 17.0401 2.7612 15.8268C2.25866 14.6136 2 13.3132 2 12C2 9.34784 3.05357 6.8043 4.92893 4.92893C6.8043 3.05357 9.34784 2 12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
               </div>
               <span>View Progress</span>
-            </button>
+            </router-link>
 
-            <button @click="navigateTo('profile')" class="action-btn">
+            <router-link to="/profile" class="action-btn">
               <div class="action-icon">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
                   <path d="M12 12C14.21 12 16 10.21 16 8C16 5.79 14.21 4 12 4C9.79 4 8 5.79 8 8C8 10.21 9.79 12 12 12ZM12 14C9.33 14 4 15.34 4 18V20H20V18C20 15.34 14.67 14 12 14Z" fill="currentColor"/>
                 </svg>
               </div>
               <span>Edit Profile</span>
-            </button>
+            </router-link>
           </div>
         </div>
       </div>
@@ -130,10 +131,8 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 
-const router = useRouter();
 const authStore = useAuthStore();
 
 const stats = ref({
@@ -168,19 +167,6 @@ const getActivityIcon = (type: string) => {
   return icons[type] || icons.lesson;
 };
 
-const navigateTo = (route: string) => {
-  router.push(`/${route}`);
-};
-
-const handleLogout = async () => {
-  try {
-    await authStore.logout();
-    router.push('/login');
-  } catch (error) {
-    console.error('Logout failed:', error);
-  }
-};
-
 onMounted(() => {
   // Check authentication status
   authStore.checkAuth();
@@ -189,19 +175,14 @@ onMounted(() => {
 
 <style scoped>
 .home-container {
-  min-height: 100vh;
-  background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
   padding: 24px;
 }
 
 .home-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 48px;
-  padding: 24px;
   background: white;
   border-radius: 16px;
+  padding: 32px;
+  margin-bottom: 32px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
 }
 
@@ -220,42 +201,28 @@ onMounted(() => {
   font-size: 16px;
 }
 
-.user-info {
+.quick-stats {
   display: flex;
-  align-items: center;
-  gap: 20px;
+  gap: 32px;
+  margin-top: 24px;
 }
 
-.welcome {
-  font-size: 16px;
-  color: #4a5568;
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stat-label {
+  font-size: 14px;
+  color: #718096;
   font-weight: 500;
 }
 
-.btn-logout {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 20px;
-  background: #fed7d7;
-  color: #c53030;
-  border: none;
-  border-radius: 12px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.btn-logout:hover {
-  background: #fc8181;
-  color: white;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(252, 129, 129, 0.3);
-}
-
-.btn-logout svg {
-  color: currentColor;
+.stat-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1a202c;
 }
 
 .stats-grid {
@@ -424,6 +391,7 @@ onMounted(() => {
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
+  text-decoration: none;
 }
 
 .action-btn:hover {
@@ -446,29 +414,12 @@ onMounted(() => {
 }
 
 @media (max-width: 768px) {
-  .home-header {
-    flex-direction: column;
-    gap: 20px;
-    text-align: center;
-  }
-
-  .user-info {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .stats-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 480px) {
   .home-container {
     padding: 16px;
   }
 
   .home-header {
-    padding: 20px;
+    padding: 24px;
   }
 
   .header-content h1 {
@@ -481,6 +432,11 @@ onMounted(() => {
 
   .actions-grid {
     grid-template-columns: 1fr;
+  }
+
+  .quick-stats {
+    flex-direction: column;
+    gap: 16px;
   }
 }
 </style>

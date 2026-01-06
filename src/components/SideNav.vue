@@ -50,7 +50,7 @@
     </aside>
 
     <main class="main-content">
-      <router-view />
+      <slot />
     </main>
   </div>
 </template>
@@ -107,7 +107,7 @@ const navItems = [
 ];
 
 const isActive = (path: string) => {
-  return route.path === path;
+  return route.path === path || (path === '/' && route.path === '/');
 };
 
 const toggleSidebar = () => {
@@ -397,6 +397,7 @@ const handleLogout = async () => {
   flex: 1;
   overflow-y: auto;
   padding: 0;
+  background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
 }
 
 @media (max-width: 768px) {
@@ -416,6 +417,7 @@ const handleLogout = async () => {
 
   .main-content {
     margin-left: 0;
+    padding: 16px;
   }
 }
 

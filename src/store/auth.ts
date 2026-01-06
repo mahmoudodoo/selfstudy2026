@@ -1,10 +1,10 @@
 import { defineStore } from 'pinia';
-import { ref, computed } from 'vue';
+import { ref } from 'vue';
 import { authService } from '@/services/auth.service';
 import { userService } from '@/services/user.service';
 import { otpService } from '@/services/otp.service';
-import type { LoginRequest, LoginResponse, TokenValidationResponse } from '@/services/auth.service';
-import type { UserProfile, RegisterResponse, EmailVerificationRequest } from '@/services/user.service';
+import type { LoginRequest, LoginResponse } from '@/services/auth.service';
+import type { UserProfile, RegisterResponse } from '@/services/user.service';
 import type { OTPGenerationRequest, OTPVerificationRequest } from '@/services/otp.service';
 import { serviceRegistry } from '@/services/config';
 
@@ -50,10 +50,12 @@ export const useAuthStore = defineStore('auth', () => {
         }
     };
 
-    // Login
+    // Login function
     const login = async (credentials: LoginRequest): Promise<LoginResponse> => {
         loading.value = true;
         error.value = null;
+        requiresVerification.value = false;
+        verificationData.value = null;
 
         try {
             // Clear service registry cache to get fresh replicas
@@ -61,25 +63,28 @@ export const useAuthStore = defineStore('auth', () => {
 
             const response = await authService.login(credentials);
 
+            // Handle verification required response
             if (response.requires_verification) {
                 requiresVerification.value = true;
                 verificationData.value = {
                     user_id: response.user_id,
                     verification_domain: response.verification_domain,
                     user_profile_domain: response.user_profile_domain,
+                    username: credentials.username,
                 };
                 return response;
             }
 
+            // Successful login
             user.value = {
                 id: response.user_id,
                 token: response.token,
                 expiresAt: response.expires_at,
+                username: response.username,
+                email: response.email
             };
             token.value = response.token;
             isAuthenticated.value = true;
-            requiresVerification.value = false;
-            verificationData.value = null;
 
             return response;
         } catch (err: any) {
@@ -90,7 +95,7 @@ export const useAuthStore = defineStore('auth', () => {
         }
     };
 
-    // Register
+    // Register function
     const register = async (userData: UserProfile): Promise<RegisterResponse> => {
         loading.value = true;
         error.value = null;
@@ -151,8 +156,11 @@ export const useAuthStore = defineStore('auth', () => {
                 try {
                     const userData = await userService.getUserProfile(data.user_id);
                     if (userData.is_email_verified) {
-                        // Generate token using create-token endpoint
-                        await authService.validateToken(authService.getToken() || '');
+                        // Get current token or validate
+                        const currentToken = authService.getToken();
+                        if (currentToken) {
+                            await authService.validateToken(currentToken);
+                        }
                     }
                 } catch (loginErr) {
                     console.warn('Auto-login after verification failed:', loginErr);
@@ -185,13 +193,20 @@ export const useAuthStore = defineStore('auth', () => {
     };
 
     // Verify email directly
-    const verifyEmail = async (data: EmailVerificationRequest) => {
+    const verifyEmail = async (user_id: string) => {
         loading.value = true;
         error.value = null;
 
         try {
             serviceRegistry.clearCache();
-            return await userService.verifyEmail(data);
+            const response = await userService.verifyEmail(user_id);
+
+            if (response.email_verified) {
+                requiresVerification.value = false;
+                verificationData.value = null;
+            }
+
+            return response;
         } catch (err: any) {
             error.value = err.message || 'Failed to verify email';
             throw err;
@@ -249,6 +264,7 @@ export const useAuthStore = defineStore('auth', () => {
     };
 
     return {
+        // State
         user,
         token,
         isAuthenticated,
@@ -257,6 +273,7 @@ export const useAuthStore = defineStore('auth', () => {
         requiresVerification,
         verificationData,
 
+        // Actions
         initAuth,
         checkAuth,
         login,

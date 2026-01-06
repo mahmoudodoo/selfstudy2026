@@ -11,29 +11,27 @@ export async function authGuard(
 ): Promise<void> {
     const authStore = useAuthStore();
 
-    // Initialize auth from localStorage
-    authStore.initAuth();
-
-    // Check if route is public
-    const isPublicRoute = publicRoutes.includes(to.path);
-
-    if (isPublicRoute) {
-        // For public routes, just proceed
-        next();
-        return;
-    }
-
-    // For protected routes, check authentication
     try {
-        const isAuthenticated = await authStore.checkAuth();
+        // First check if we have local auth data
+        if (authStore.token && !authStore.isAuthenticated) {
+            await authStore.checkAuth();
+        }
 
-        if (isAuthenticated) {
+        // Check if route is public
+        const isPublicRoute = publicRoutes.includes(to.path);
+
+        if (isPublicRoute) {
+            next();
+            return;
+        }
+
+        // For protected routes, ensure authentication
+        if (authStore.isAuthenticated) {
             // Check if user needs email verification
             if (authStore.requiresVerification && to.path !== '/verify-email') {
                 next('/verify-email');
                 return;
             }
-
             next();
         } else {
             // Redirect to login if not authenticated
@@ -52,10 +50,12 @@ export function publicOnlyGuard(
     next: NavigationGuardNext
 ): void {
     const authStore = useAuthStore();
+
+    // Initialize auth from localStorage
     authStore.initAuth();
 
-    if (authStore.isAuthenticated) {
-        // If already authenticated, redirect to home
+    // If already authenticated and trying to access public route, redirect to home
+    if (authStore.isAuthenticated && (to.path === '/login' || to.path === '/register')) {
         next('/');
     } else {
         next();

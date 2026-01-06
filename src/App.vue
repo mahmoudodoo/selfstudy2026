@@ -9,18 +9,20 @@ import { useAuthStore } from './store/auth';
 const authStore = useAuthStore();
 
 onMounted(() => {
-  // Initialize authentication
+  // Initialize authentication from localStorage
   authStore.initAuth();
 
-  // Check auth status periodically
+  // Check auth status periodically (only if we have a token)
   setInterval(() => {
-    authStore.checkAuth();
+    if (authStore.token) {
+      authStore.checkAuth();
+    }
   }, 5 * 60 * 1000); // Check every 5 minutes
 });
 </script>
 
 <style>
-/* Global styles */
+/* Global styles - keep your existing styles */
 * {
   margin: 0;
   padding: 0;

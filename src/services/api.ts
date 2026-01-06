@@ -21,21 +21,41 @@ export class ApiError extends Error {
 export class ApiService {
     private AUTH_TOKEN = import.meta.env.VITE_AUTH_TOKEN;
 
-    private async getHeaders(additionalHeaders: Record<string, string> = {}) {
-        return {
+    private getHeaders(additionalHeaders: Record<string, string> = {}) {
+        const headers: Record<string, string> = {
             'Content-Type': 'application/json',
-            'Authorization': `Token ${this.AUTH_TOKEN}`,
             ...additionalHeaders,
         };
+
+        // Always add AUTH_TOKEN for all requests
+        if (this.AUTH_TOKEN && this.AUTH_TOKEN !== 'Token Not Found!') {
+            headers['Authorization'] = `Token ${this.AUTH_TOKEN}`;
+        } else {
+            console.error('AUTH_TOKEN is not set or invalid in environment variables');
+        }
+
+        return headers;
     }
 
     private async handleResponse<T>(response: Response): Promise<T> {
+        console.log(`Response status: ${response.status} ${response.statusText}`);
+
         if (!response.ok) {
             let errorData;
             try {
                 errorData = await response.json();
             } catch {
                 errorData = { error: response.statusText };
+            }
+
+            // Log more details for 401 errors
+            if (response.status === 401) {
+                console.error('401 Unauthorized error details:', {
+                    url: response.url,
+                    status: response.status,
+                    headers: Object.fromEntries(response.headers.entries()),
+                              data: errorData
+                });
             }
 
             throw new ApiError(
@@ -61,11 +81,23 @@ export class ApiService {
         headers: Record<string, string> = {}
     ): Promise<T> {
         const url = `${baseUrl}${endpoint}`;
-        console.log(`API ${method}: ${url}`);
+        console.log(`API ${method}: ${url}`, data ? {
+            ...data,
+            password: data.password ? '[HIDDEN]' : undefined
+        } : '');
+
+        // Log headers (excluding sensitive data)
+        const requestHeaders = this.getHeaders(headers);
+        console.log('Request headers:', {
+            ...requestHeaders,
+            Authorization: requestHeaders.Authorization ?
+            `${requestHeaders.Authorization.substring(0, 20)}...` :
+            'Not set'
+        });
 
         const options: RequestInit = {
             method,
-            headers: await this.getHeaders(headers),
+            headers: requestHeaders,
         };
 
         if (data && method !== 'GET') {

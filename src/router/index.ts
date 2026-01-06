@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { authGuard, publicOnlyGuard } from './guard';
+import DefaultLayout from '@/layouts/DefaultLayout.vue';
 import Home from '../views/Home.vue';
 import Courses from '../views/Courses.vue';
 import Progress from '../views/Progress.vue';
@@ -11,28 +12,35 @@ import VerifyEmail from '../views/VerifyEmail.vue';
 const routes = [
     {
         path: '/',
-        name: 'Home',
-        component: Home,
-        meta: { title: 'Dashboard', requiresAuth: true }
+        component: DefaultLayout,
+        meta: { requiresAuth: true },
+        children: [
+            {
+                path: '',
+                name: 'Home',
+                component: Home,
+                meta: { title: 'Dashboard' }
+            },
+            {
+                path: 'courses',
+                name: 'Courses',
+                component: Courses,
+                meta: { title: 'Courses' }
+            },
+            {
+                path: 'progress',
+                name: 'Progress',
+                component: Progress,
+                meta: { title: 'Learning Progress' }
+            },
+            {
+                path: 'profile',
+                name: 'Profile',
+                component: Profile,
+                meta: { title: 'Profile' }
+            }
+        ]
     },
-{
-    path: '/courses',
-    name: 'Courses',
-    component: Courses,
-    meta: { title: 'Courses', requiresAuth: true }
-},
-{
-    path: '/progress',
-    name: 'Progress',
-    component: Progress,
-    meta: { title: 'Learning Progress', requiresAuth: true }
-},
-{
-    path: '/profile',
-    name: 'Profile',
-    component: Profile,
-    meta: { title: 'Profile', requiresAuth: true }
-},
 {
     path: '/login',
     name: 'Login',
