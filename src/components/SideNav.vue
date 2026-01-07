@@ -56,41 +56,81 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, h } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 
-// Icons components
+// Icons as render functions
 const DashboardIcon = {
-  template: `
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-      <path d="M3 13H11V3H3V13ZM3 21H11V15H3V21ZM13 21H21V11H13V21ZM13 3V9H21V3H13Z" fill="currentColor"/>
-    </svg>
-  `
+  name: 'DashboardIcon',
+  render() {
+    return h('svg', {
+      width: '24',
+      height: '24',
+      viewBox: '0 0 24 24',
+      fill: 'none'
+    }, [
+      h('path', {
+        d: 'M3 13H11V3H3V13ZM3 21H11V15H3V21ZM13 21H21V11H13V21ZM13 3V9H21V3H13Z',
+        fill: 'currentColor'
+      })
+    ]);
+  }
 };
 
 const CoursesIcon = {
-  template: `
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-      <path d="M12 2L2 7L12 12L22 7L12 2ZM2 17L12 22L22 17M2 12L12 17L22 12" stroke="currentColor" stroke-width="2"/>
-    </svg>
-  `
+  name: 'CoursesIcon',
+  render() {
+    return h('svg', {
+      width: '24',
+      height: '24',
+      viewBox: '0 0 24 24',
+      fill: 'none'
+    }, [
+      h('path', {
+        d: 'M12 2L2 7L12 12L22 7L12 2ZM2 17L12 22L22 17M2 12L12 17L22 12',
+        stroke: 'currentColor',
+        'stroke-width': '2'
+      })
+    ]);
+  }
 };
 
 const ProgressIcon = {
-  template: `
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-      <path d="M9 12L11 14L15 10M12 2C13.3132 2 14.6136 2.25866 15.8268 2.7612C17.0401 3.26375 18.1425 4.00035 19.0711 4.92893C19.9997 5.85752 20.7362 6.95991 21.2388 8.17317C21.7413 9.38642 22 10.6868 22 12C22 13.3132 21.7413 14.6136 21.2388 15.8268C20.7362 17.0401 19.9997 18.1425 19.0711 19.0711C18.1425 19.9997 17.0401 20.7362 15.8268 21.2388C14.6136 21.7413 13.3132 22 12 22C10.6868 22 9.38642 21.7413 8.17317 21.2388C6.95991 20.7362 5.85752 19.9997 4.92893 19.0711C4.00035 18.1425 3.26375 17.0401 2.7612 15.8268C2.25866 14.6136 2 13.3132 2 12C2 9.34784 3.05357 6.8043 4.92893 4.92893C6.8043 3.05357 9.34784 2 12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
-  `
+  name: 'ProgressIcon',
+  render() {
+    return h('svg', {
+      width: '24',
+      height: '24',
+      viewBox: '0 0 24 24',
+      fill: 'none'
+    }, [
+      h('path', {
+        d: 'M9 12L11 14L15 10M12 2C13.3132 2 14.6136 2.25866 15.8268 2.7612C17.0401 3.26375 18.1425 4.00035 19.0711 4.92893C19.9997 5.85752 20.7362 6.95991 21.2388 8.17317C21.7413 9.38642 22 10.6868 22 12C22 13.3132 21.7413 14.6136 21.2388 15.8268C20.7362 17.0401 19.9997 18.1425 19.0711 19.0711C18.1425 19.9997 17.0401 20.7362 15.8268 21.2388C14.6136 21.7413 13.3132 22 12 22C10.6868 22 9.38642 21.7413 8.17317 21.2388C6.95991 20.7362 5.85752 19.9997 4.92893 19.0711C4.00035 18.1425 3.26375 17.0401 2.7612 15.8268C2.25866 14.6136 2 13.3132 2 12C2 9.34784 3.05357 6.8043 4.92893 4.92893C6.8043 3.05357 9.34784 2 12 2Z',
+        stroke: 'currentColor',
+        'stroke-width': '2',
+        'stroke-linecap': 'round',
+        'stroke-linejoin': 'round'
+      })
+    ]);
+  }
 };
 
 const ProfileIcon = {
-  template: `
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-      <path d="M12 12C14.21 12 16 10.21 16 8C16 5.79 14.21 4 12 4C9.79 4 8 5.79 8 8C8 10.21 9.79 12 12 12ZM12 14C9.33 14 4 15.34 4 18V20H20V18C20 15.34 14.67 14 12 14Z" fill="currentColor"/>
-    </svg>
-  `
+  name: 'ProfileIcon',
+  render() {
+    return h('svg', {
+      width: '24',
+      height: '24',
+      viewBox: '0 0 24 24',
+      fill: 'none'
+    }, [
+      h('path', {
+        d: 'M12 12C14.21 12 16 10.21 16 8C16 5.79 14.21 4 12 4C9.79 4 8 5.79 8 8C8 10.21 9.79 12 12 12ZM12 14C9.33 14 4 15.34 4 18V20H20V18C20 15.34 14.67 14 12 14Z',
+        fill: 'currentColor'
+      })
+    ]);
+  }
 };
 
 const route = useRoute();
