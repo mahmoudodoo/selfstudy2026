@@ -3,6 +3,8 @@ import { authGuard, publicOnlyGuard } from './guard';
 import DefaultLayout from '@/layouts/DefaultLayout.vue';
 import Home from '../views/Home.vue';
 import Courses from '../views/Courses.vue';
+import CourseDetails from '../views/CourseDetails.vue';
+import HomeworkView from '../views/HomeworkView.vue';
 import Progress from '../views/Progress.vue';
 import Profile from '../views/Profile.vue';
 import Login from '../views/Login.vue';
@@ -26,6 +28,18 @@ const routes = [
                 name: 'Courses',
                 component: Courses,
                 meta: { title: 'Courses' }
+            },
+            {
+                path: 'course/:id',
+                name: 'CourseDetails',
+                component: CourseDetails,
+                meta: { title: 'Course Details' }
+            },
+            {
+                path: 'course/:courseId/lesson/:lessonId/homework',
+                name: 'Homework',
+                component: HomeworkView,
+                meta: { title: 'Homework' }
             },
             {
                 path: 'progress',

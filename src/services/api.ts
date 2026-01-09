@@ -27,11 +27,15 @@ export class ApiService {
             ...additionalHeaders,
         };
 
-        // Always add AUTH_TOKEN for all requests
-        if (this.AUTH_TOKEN && this.AUTH_TOKEN !== 'Token Not Found!') {
-            headers['Authorization'] = `Token ${this.AUTH_TOKEN}`;
+        // ALWAYS add the AUTH_TOKEN - REQUIRED for backend APIs
+        const token = this.AUTH_TOKEN;
+        if (token && token !== 'Token Not Found!' && token !== 'your-actual-auth-token-here') {
+            headers['Authorization'] = `Token ${token}`;
         } else {
-            console.error('AUTH_TOKEN is not set or invalid in environment variables');
+            console.error('❌ VITE_AUTH_TOKEN is missing or invalid!');
+            console.error('Current token:', token);
+            console.error('Please check your .env file');
+            throw new Error('Authentication token is required but missing or invalid.');
         }
 
         return headers;
@@ -39,27 +43,32 @@ export class ApiService {
 
     private async handleResponse<T>(response: Response): Promise<T> {
         console.log(`Response status: ${response.status} ${response.statusText}`);
+        console.log(`Response URL: ${response.url}`);
 
         if (!response.ok) {
             let errorData;
             try {
                 errorData = await response.json();
+                console.error('❌ Error response data:', errorData);
             } catch {
                 errorData = { error: response.statusText };
             }
 
-            // Log more details for 401 errors
-            if (response.status === 401) {
-                console.error('401 Unauthorized error details:', {
+            // Detailed error logging
+            if (response.status === 400) {
+                console.error('400 Bad Request details:', {
                     url: response.url,
                     status: response.status,
-                    headers: Object.fromEntries(response.headers.entries()),
-                              data: errorData
+                    data: errorData
                 });
+            } else if (response.status === 401) {
+                console.error('401 Unauthorized - Check your VITE_AUTH_TOKEN');
+            } else if (response.status === 404) {
+                console.error('404 Not Found:', response.url);
             }
 
             throw new ApiError(
-                errorData.error || errorData.message || `HTTP ${response.status}`,
+                errorData.error || errorData.message || errorData.detail || `HTTP ${response.status}: ${response.statusText}`,
                 response.status,
                 errorData
             );
@@ -67,7 +76,14 @@ export class ApiService {
 
         const contentType = response.headers.get('content-type');
         if (contentType && contentType.includes('application/json')) {
-            return response.json();
+            try {
+                const data = await response.json();
+                console.log('✅ Response data received');
+                return data;
+            } catch (error) {
+                console.error('Failed to parse JSON response:', error);
+                throw new ApiError('Invalid JSON response', 500);
+            }
         }
 
         return response.text() as unknown as T;
@@ -81,23 +97,21 @@ export class ApiService {
         headers: Record<string, string> = {}
     ): Promise<T> {
         const url = `${baseUrl}${endpoint}`;
-        console.log(`API ${method}: ${url}`, data ? {
-            ...data,
-            password: data.password ? '[HIDDEN]' : undefined
-        } : '');
+        console.log(`🚀 API ${method}: ${url}`);
 
-        // Log headers (excluding sensitive data)
+        if (data) {
+            console.log('Request data:', {
+                ...data,
+                password: data.password ? '[HIDDEN]' : undefined
+            });
+        }
+
         const requestHeaders = this.getHeaders(headers);
-        console.log('Request headers:', {
-            ...requestHeaders,
-            Authorization: requestHeaders.Authorization ?
-            `${requestHeaders.Authorization.substring(0, 20)}...` :
-            'Not set'
-        });
 
         const options: RequestInit = {
             method,
             headers: requestHeaders,
+            cache: 'no-cache' // Prevent caching issues
         };
 
         if (data && method !== 'GET') {

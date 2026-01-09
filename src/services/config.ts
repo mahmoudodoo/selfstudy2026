@@ -120,6 +120,24 @@ class ServiceRegistry {
     clearCache() {
         this.cache.clear();
     }
+
+    async getRandomCourseReplica(): Promise<string | null> {
+        const replicas = await this.getServiceReplicas(
+            parseInt(import.meta.env.VITE_COURSE_APP_ID || '19'),
+                                                       'course'
+        );
+        return this.getRandomReplica(replicas);
+    }
+
+    async getRandomMediaReplica(): Promise<string | null> {
+        const replicas = await this.getServiceReplicas(
+            parseInt(import.meta.env.VITE_MEDIA_APP_ID || '18'),
+                                                       'media'
+        );
+        return this.getRandomReplica(replicas);
+    }
+
+
 }
 
 export const serviceRegistry = new ServiceRegistry();
