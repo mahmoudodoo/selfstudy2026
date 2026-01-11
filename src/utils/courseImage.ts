@@ -1,3 +1,10 @@
+/**
+ * Utility functions for course images
+ */
+
+/**
+ * Get the first two initials from a course title
+ */
 export function getCourseInitials(title: string): string {
     if (!title || typeof title !== 'string' || title.trim().length === 0) return 'CS';
 
@@ -17,6 +24,9 @@ export function getCourseInitials(title: string): string {
     return (trimmedTitle.charAt(0) + 'S').toUpperCase();
 }
 
+/**
+ * Get a consistent color for a course based on its title
+ */
 export function getCourseColor(title: string): string {
     if (!title) return 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
 
@@ -37,19 +47,81 @@ export function getCourseColor(title: string): string {
     return colors[index];
 }
 
+/**
+ * Check if we should use the generated image (color + initials)
+ * Returns true if the image URL is invalid or empty
+ */
 export function shouldUseGeneratedImage(imageUrl?: string): boolean {
-    if (!imageUrl || imageUrl.trim() === '') return true;
+    // If no URL or empty string, use generated image
+    if (!imageUrl || imageUrl.trim() === '') {
+        console.log('No image URL provided, using generated image');
+        return true;
+    }
 
-    const url = imageUrl.toLowerCase();
-    return url.includes('placeholder') ||
-    url.includes('via.placeholder') ||
-    url.includes('data:image') ||
-    !url.startsWith('http');
+    const url = imageUrl.toLowerCase().trim();
+
+    // Check for common placeholder/empty image patterns
+    const invalidPatterns = [
+        'placeholder',
+        'via.placeholder',
+        'default.jpg',
+        'default.png',
+        'no-image',
+        'null',
+        'undefined',
+        'example.com',
+        'dummyimage.com',
+        'lorempixel.com'
+    ];
+
+    for (const pattern of invalidPatterns) {
+        if (url.includes(pattern)) {
+            console.log(`Image URL contains invalid pattern "${pattern}", using generated image`);
+            return true;
+        }
+    }
+
+    // Check if it's a valid URL (starts with http/https)
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        console.log('Image URL does not start with http/https, using generated image');
+        return true;
+    }
+
+    // Check for common image file extensions
+    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp', '.tiff'];
+    const hasImageExtension = imageExtensions.some(ext => url.includes(ext));
+
+    // Check for common image hosting services
+    const imageHosts = [
+        'cloudinary.com',
+        's3.amazonaws.com',
+        'storage.googleapis.com',
+        'imgur.com',
+        'images.unsplash.com',
+        'picsum.photos',
+        'cdn.',
+        'storage.',
+        'media.',
+        'images.',
+        'img.'
+    ];
+
+    const hasImageHost = imageHosts.some(host => url.includes(host));
+
+    // If it has an image extension or is from an image host, it's valid
+    if (hasImageExtension || hasImageHost) {
+        console.log('Image URL is valid, using real image:', imageUrl);
+        return false;
+    }
+
+    console.log('Image URL appears invalid, using generated image:', imageUrl);
+    return true;
 }
 
+/**
+ * Check if an image URL is valid
+ * This is the opposite of shouldUseGeneratedImage
+ */
 export function isValidImageUrl(url?: string): boolean {
-    if (!url) return false;
-    return url.startsWith('http') &&
-    !url.includes('placeholder') &&
-    !url.includes('via.placeholder');
+    return !shouldUseGeneratedImage(url);
 }

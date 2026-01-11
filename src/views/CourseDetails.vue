@@ -42,20 +42,27 @@
 
         <div class="course-hero">
           <div class="course-image-container">
+            <!-- Generated Image (shown when no real image or when real image fails to load) -->
             <div
               class="course-image-generated"
               :style="{ background: getCourseColor(course.title) }"
+              :class="{ 'visible': !hasValidImage || imageLoadError }"
             >
               <span class="course-initials">{{ getCourseInitials(course.title) }}</span>
               <div class="image-overlay-generated"></div>
             </div>
+
+            <!-- Real Course Image (shown if available and valid) -->
             <img
-              v-if="course.image_url && !shouldUseGeneratedImage(course.image_url)"
+              v-if="hasValidImage"
               :src="course.image_url"
               :alt="course.title"
               class="course-image"
               @error="handleImageError"
+              @load="handleImageLoad"
+              :class="{ 'visible': !imageLoadError, 'loading': imageLoading }"
             >
+
             <div class="image-overlay"></div>
           </div>
 
@@ -365,12 +372,25 @@ const submittingComment = ref(false);
 const commentError = ref<string | null>(null);
 const deletingCommentId = ref<string | null>(null);
 const isUserRegistered = ref(false);
+const imageLoadError = ref(false);
+const imageLoading = ref(false);
 
 // Computed
 const tabs = computed(() => [
   { id: 'lessons', label: 'Lessons', icon: '📚' },
   { id: 'comments', label: 'Comments', icon: '💬' },
 ]);
+
+const hasValidImage = computed(() => {
+  if (!course.value?.image_url) return false;
+  const shouldUseGenerated = shouldUseGeneratedImage(course.value.image_url);
+  console.log('Image URL check:', {
+    url: course.value.image_url,
+    shouldUseGenerated: shouldUseGenerated,
+    hasValidImage: !shouldUseGenerated
+  });
+  return !shouldUseGenerated;
+});
 
 // Methods
 const fetchCourseData = async () => {
@@ -382,11 +402,15 @@ const fetchCourseData = async () => {
 
   loading.value = true;
   error.value = null;
+  imageLoadError.value = false;
+  imageLoading.value = false;
 
   try {
     // Fetch course details
     course.value = await courseService.getCourse(courseId);
     console.log('Course loaded:', course.value);
+    console.log('Course image URL:', course.value?.image_url);
+    console.log('Has valid image?', hasValidImage.value);
 
     // Fetch lessons
     lessons.value = await courseService.getCourseLessons(courseId);
@@ -414,6 +438,20 @@ const fetchCourseData = async () => {
   } finally {
     loading.value = false;
   }
+};
+
+const handleImageError = (event: Event) => {
+  console.log('Real image failed to load, showing generated image');
+  const img = event.target as HTMLImageElement;
+  imageLoadError.value = true;
+  imageLoading.value = false;
+};
+
+const handleImageLoad = (event: Event) => {
+  console.log('Real image loaded successfully');
+  const img = event.target as HTMLImageElement;
+  imageLoadError.value = false;
+  imageLoading.value = false;
 };
 
 const submitComment = async () => {
@@ -487,19 +525,6 @@ const formatDate = (dateString?: string) => {
   }
 };
 
-const handleImageError = (event: Event) => {
-  const img = event.target as HTMLImageElement;
-  img.style.display = 'none';
-
-  const container = img.closest('.course-image-container');
-  if (container) {
-    const generatedDiv = container.querySelector('.course-image-generated') as HTMLElement;
-    if (generatedDiv) {
-      generatedDiv.style.display = 'flex';
-    }
-  }
-};
-
 const getUserInitials = (userId: string) => {
   if (!userId) return 'U';
   const parts = userId.split(' ');
@@ -530,7 +555,6 @@ onMounted(() => {
   fetchCourseData();
 });
 </script>
-
 
 <style scoped>
 .course-details-page {
@@ -675,7 +699,17 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  position: relative;
+  position: absolute;
+  top: 0;
+  left: 0;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 1;
+}
+
+.course-image-generated.visible {
+  opacity: 1;
+  z-index: 3;
 }
 
 .course-initials {
@@ -700,6 +734,20 @@ onMounted(() => {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  position: absolute;
+  top: 0;
+  left: 0;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  z-index: 2;
+}
+
+.course-image.visible {
+  opacity: 1;
+}
+
+.course-image.loading {
+  opacity: 0.5;
 }
 
 .image-overlay {
@@ -709,11 +757,12 @@ onMounted(() => {
   right: 0;
   bottom: 0;
   background: linear-gradient(to bottom, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.7) 100%);
+  z-index: 4;
 }
 
 .course-info {
   position: relative;
-  z-index: 1;
+  z-index: 5;
   padding: 0 20px;
   margin-top: -100px;
   color: white;
