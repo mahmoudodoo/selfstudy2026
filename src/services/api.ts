@@ -41,6 +41,7 @@ export class ApiService {
         return headers;
     }
 
+    // In the handleResponse function, add more detailed logging:
     private async handleResponse<T>(response: Response): Promise<T> {
         console.log(`Response status: ${response.status} ${response.statusText}`);
         console.log(`Response URL: ${response.url}`);
@@ -49,9 +50,15 @@ export class ApiService {
             let errorData;
             try {
                 errorData = await response.json();
-                console.error('❌ Error response data:', errorData);
+                console.error('❌ Error response data:', JSON.stringify(errorData, null, 2));
             } catch {
-                errorData = { error: response.statusText };
+                try {
+                    const text = await response.text();
+                    errorData = { error: text || response.statusText };
+                    console.error('❌ Error response text:', text);
+                } catch {
+                    errorData = { error: response.statusText };
+                }
             }
 
             // Detailed error logging
@@ -59,18 +66,16 @@ export class ApiService {
                 console.error('400 Bad Request details:', {
                     url: response.url,
                     status: response.status,
-                    data: errorData
+                    data: errorData,
+                    headers: Object.fromEntries(response.headers.entries())
                 });
-            } else if (response.status === 401) {
-                console.error('401 Unauthorized - Check your VITE_AUTH_TOKEN');
-            } else if (response.status === 404) {
-                console.error('404 Not Found:', response.url);
             }
 
             throw new ApiError(
-                errorData.error || errorData.message || errorData.detail || `HTTP ${response.status}: ${response.statusText}`,
-                response.status,
-                errorData
+                errorData.error || errorData.message || errorData.detail ||
+                (typeof errorData === 'string' ? errorData : `HTTP ${response.status}: ${response.statusText}`),
+                               response.status,
+                               errorData
             );
         }
 
@@ -78,7 +83,7 @@ export class ApiService {
         if (contentType && contentType.includes('application/json')) {
             try {
                 const data = await response.json();
-                console.log('✅ Response data received');
+                console.log('✅ Response data received:', data);
                 return data;
             } catch (error) {
                 console.error('Failed to parse JSON response:', error);

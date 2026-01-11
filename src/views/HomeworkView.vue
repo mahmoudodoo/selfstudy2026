@@ -54,66 +54,103 @@
 
       <!-- Main Content -->
       <div class="main-content">
-        <div class="content-grid">
-          <!-- Left Column - Homework Details -->
-          <div class="left-column">
-            <section class="section homework-details">
-              <div class="section-header">
-                <h2 class="section-title">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                    <polyline points="14 2 14 8 20 8"></polyline>
-                    <line x1="16" y1="13" x2="8" y2="13"></line>
-                    <line x1="16" y1="17" x2="8" y2="17"></line>
-                    <polyline points="10 9 9 9 8 9"></polyline>
-                  </svg>
-                  Assignment Details
-                </h2>
-              </div>
+        <!-- Homework Content & Submission -->
+        <div class="homework-main-content">
+          <!-- Homework Content Section -->
+          <section class="section homework-content-section">
+            <div class="section-header">
+              <h2 class="section-title">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                  <line x1="16" y1="13" x2="8" y2="13"></line>
+                  <line x1="16" y1="17" x2="8" y2="17"></line>
+                  <polyline points="10 9 9 9 8 9"></polyline>
+                </svg>
+                Assignment Content
+              </h2>
+            </div>
 
-              <div class="details-content">
-                <div class="details-card">
-                  <h3 class="details-title">Instructions</h3>
-                  <div class="details-text" v-html="formatInstructions(homework.description)"></div>
+            <div class="homework-content-wrapper">
+              <!-- Homework Materials -->
+              <div v-if="homework.homework_url" class="homework-materials">
+                <div class="materials-header">
+                  <h3 class="materials-title">Homework Materials</h3>
+                  <a :href="homework.homework_url" target="_blank" class="external-link">
+                    Open in new tab
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                      <polyline points="15 3 21 3 21 9"></polyline>
+                      <line x1="10" y1="14" x2="21" y2="3"></line>
+                    </svg>
+                  </a>
+                </div>
 
-                  <div v-if="homework.homework_url" class="assignment-link">
-                    <a :href="homework.homework_url" target="_blank" class="link-btn">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                        <polyline points="15 3 21 3 21 9"></polyline>
-                        <line x1="10" y1="14" x2="21" y2="3"></line>
-                      </svg>
-                      View Assignment Material
+                <!-- Show direct link for Google Docs (can't be embedded) -->
+                <div v-if="isGoogleDocsLink" class="docs-warning">
+                  <div class="warning-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <line x1="12" y1="8" x2="12" y2="12"></line>
+                      <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                  </div>
+                  <div class="warning-content">
+                    <p>This Google Docs link cannot be embedded. Please use the link below to view the document:</p>
+                    <a :href="homework.homework_url" target="_blank" class="docs-link">
+                      {{ homework.homework_url }}
                     </a>
                   </div>
                 </div>
-              </div>
-            </section>
 
-            <!-- Submission Section -->
-            <section class="section submission-section">
-              <div class="section-header">
-                <h2 class="section-title">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                  </svg>
-                  Your Submission
-                </h2>
-                <span v-if="submission" class="submission-status submitted">Submitted</span>
-                <span v-else class="submission-status not-submitted">Not Submitted</span>
+                <!-- Embedded content for non-Google Docs -->
+                <div v-else class="embed-container">
+                  <iframe
+                    v-if="!isGoogleDocsLink"
+                    :src="homework.homework_url"
+                    class="homework-iframe"
+                    :title="homework.title"
+                    allowfullscreen
+                  ></iframe>
+                  <div v-else class="no-embed">
+                    <p>Preview not available. Please use the link above to view the content.</p>
+                  </div>
+                </div>
               </div>
 
-              <div class="submission-content">
-                <!-- Show existing submission -->
-                <div v-if="submission" class="existing-submission">
-                  <div class="submission-card">
-                    <div class="submission-header">
-                      <div class="submission-info">
-                        <h3 class="submission-title">Submitted Work</h3>
-                        <span class="submission-date">
-                          Submitted {{ formatDate(submission.date_submitted) }}
-                        </span>
-                      </div>
+              <!-- Instructions -->
+              <div class="instructions-container">
+                <h3 class="instructions-title">Instructions</h3>
+                <div class="instructions-content" v-html="formatInstructions(homework.description)"></div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Submission Section -->
+          <section class="section submission-section">
+            <div class="section-header">
+              <h2 class="section-title">
+                <svg xmlns="http://www.w3.org2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                </svg>
+                Your Submission
+              </h2>
+              <span v-if="submission" class="submission-status submitted">Submitted</span>
+              <span v-else class="submission-status not-submitted">Not Submitted</span>
+            </div>
+
+            <div class="submission-content">
+              <!-- Show existing submission -->
+              <div v-if="submission && !showSubmissionForm" class="existing-submission">
+                <div class="submission-card">
+                  <div class="submission-header">
+                    <div class="submission-info">
+                      <h3 class="submission-title">Submitted Work</h3>
+                      <span class="submission-date">
+                        Submitted {{ formatDate(submission.date_submitted) }}
+                      </span>
+                    </div>
+                    <div class="submission-actions">
                       <button
                         class="edit-btn"
                         @click="showSubmissionForm = true"
@@ -125,173 +162,94 @@
                         Edit Submission
                       </button>
                     </div>
-
-                    <div class="submission-details">
-                      <div v-if="submission.submitted_homework_url" class="submission-link">
-                        <a :href="submission.submitted_homework_url" target="_blank" class="link-btn">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                            <polyline points="15 3 21 3 21 9"></polyline>
-                            <line x1="10" y1="14" x2="21" y2="3"></line>
-                          </svg>
-                          View Your Submission
-                        </a>
-                      </div>
-
-                      <div v-if="submission.description" class="submission-description">
-                        <h4>Submission Notes:</h4>
-                        <p>{{ submission.description }}</p>
-                      </div>
-                    </div>
                   </div>
-                </div>
 
-                <!-- Submission Form -->
-                <div v-if="showSubmissionForm || !submission" class="submission-form">
-                  <h3 class="form-title">
-                    {{ submission ? 'Update Submission' : 'Submit Homework' }}
-                  </h3>
-
-                  <form @submit.prevent="submitHomework">
-                    <div class="form-group">
-                      <label for="submissionUrl" class="form-label">
-                        Submission URL
-                        <span class="required">*</span>
-                      </label>
-                      <input
-                        id="submissionUrl"
-                        v-model="submissionForm.submitted_homework_url"
-                        type="url"
-                        placeholder="https://example.com/your-work"
-                        class="form-input"
-                        :disabled="submitting"
-                        required
-                      >
-                      <p class="form-hint">
-                        Provide a link to your work (GitHub repository, Google Drive, etc.)
-                      </p>
-                    </div>
-
-                    <div class="form-group">
-                      <label for="description" class="form-label">
-                        Description / Notes
-                      </label>
-                      <textarea
-                        id="description"
-                        v-model="submissionForm.description"
-                        placeholder="Add any notes about your submission..."
-                        class="form-textarea"
-                        :disabled="submitting"
-                        rows="4"
-                      ></textarea>
-                    </div>
-
-                    <div class="form-actions">
-                      <button
-                        v-if="submission && !showSubmissionForm"
-                        type="button"
-                        class="cancel-btn"
-                        @click="showSubmissionForm = false"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="submit"
-                        class="submit-btn"
-                        :disabled="submitting || !submissionForm.submitted_homework_url"
-                      >
-                        <span v-if="submitting" class="btn-loading"></span>
-                        <span v-else>{{ submission ? 'Update Submission' : 'Submit Homework' }}</span>
-                      </button>
-                    </div>
-
-                    <div v-if="submitError" class="error-message">
-                      {{ submitError }}
-                    </div>
-                  </form>
-                </div>
-              </div>
-            </section>
-          </div>
-
-          <!-- Right Column - Resources & Info -->
-          <div class="right-column">
-            <section class="section resources-section">
-              <div class="section-header">
-                <h2 class="section-title">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
-                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
-                  </svg>
-                  Resources
-                </h2>
-              </div>
-
-              <div class="resources-content">
-                <div class="resource-card">
-                  <h3 class="resource-title">Helpful Links</h3>
-                  <ul class="resource-list">
-                    <li v-if="homework.homework_url">
-                      <a :href="homework.homework_url" target="_blank" class="resource-link">
-                        Assignment Materials
+                  <div class="submission-details">
+                    <div v-if="submission.submitted_homework_url" class="submission-link">
+                      <a :href="submission.submitted_homework_url" target="_blank" class="link-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                          <polyline points="15 3 21 3 21 9"></polyline>
+                          <line x1="10" y1="14" x2="21" y2="3"></line>
+                        </svg>
+                        View Your Submission
                       </a>
-                    </li>
-                    <li v-if="lesson?.reading_url">
-                      <a :href="lesson.reading_url" target="_blank" class="resource-link">
-                        Lesson Reading Material
-                      </a>
-                    </li>
-                    <li v-if="lesson?.source_code_url">
-                      <a :href="lesson.source_code_url" target="_blank" class="resource-link">
-                        Source Code Examples
-                      </a>
-                    </li>
-                  </ul>
-                </div>
+                    </div>
 
-                <div class="resource-card">
-                  <h3 class="resource-title">Submission Guidelines</h3>
-                  <ul class="guidelines-list">
-                    <li>Ensure your work is accessible via the provided URL</li>
-                    <li>Include clear documentation if applicable</li>
-                    <li>Test your submission thoroughly</li>
-                    <li>Add notes to help understand your approach</li>
-                  </ul>
-                </div>
-              </div>
-            </section>
-
-            <section class="section deadline-section">
-              <div class="section-header">
-                <h2 class="section-title">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <polyline points="12 6 12 12 16 14"></polyline>
-                  </svg>
-                  Submission Status
-                </h2>
-              </div>
-
-              <div class="deadline-content">
-                <div class="status-card">
-                  <div class="status-item">
-                    <span class="status-label">Status</span>
-                    <span class="status-value" :class="submission ? 'status-submitted' : 'status-pending'">
-                      {{ submission ? 'Submitted' : 'Pending' }}
-                    </span>
-                  </div>
-                  <div class="status-item">
-                    <span class="status-label">Due Date</span>
-                    <span class="status-value">Self-paced</span>
-                  </div>
-                  <div v-if="submission" class="status-item">
-                    <span class="status-label">Last Submitted</span>
-                    <span class="status-value">{{ formatDate(submission.date_submitted) }}</span>
+                    <div v-if="submission.description" class="submission-description">
+                      <h4>Submission Notes:</h4>
+                      <p>{{ submission.description }}</p>
+                    </div>
                   </div>
                 </div>
               </div>
-            </section>
-          </div>
+
+              <!-- Submission Form -->
+              <div v-if="showSubmissionForm || !submission" class="submission-form">
+                <h3 class="form-title">
+                  {{ submission ? 'Update Submission' : 'Submit Homework' }}
+                </h3>
+
+                <form @submit.prevent="submitHomework">
+                  <div class="form-group">
+                    <label for="submissionUrl" class="form-label">
+                      Submission URL
+                      <span class="required">*</span>
+                    </label>
+                    <input
+                      id="submissionUrl"
+                      v-model="submissionForm.submitted_homework_url"
+                      type="url"
+                      placeholder="https://github.com/your-username/project or https://drive.google.com/file/d/..."
+                      class="form-input"
+                      :disabled="submitting"
+                      required
+                    >
+                    <p class="form-hint">
+                      Provide a link to your work (GitHub repository, Google Drive, CodePen, etc.)
+                    </p>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="description" class="form-label">
+                      Description / Notes
+                    </label>
+                    <textarea
+                      id="description"
+                      v-model="submissionForm.description"
+                      placeholder="Add any notes about your submission..."
+                      class="form-textarea"
+                      :disabled="submitting"
+                      rows="4"
+                    ></textarea>
+                  </div>
+
+                  <div class="form-actions">
+                    <button
+                      v-if="submission && showSubmissionForm"
+                      type="button"
+                      class="cancel-btn"
+                      @click="cancelEdit"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      class="submit-btn"
+                      :disabled="submitting || !submissionForm.submitted_homework_url"
+                    >
+                      <span v-if="submitting" class="btn-loading"></span>
+                      <span v-else>{{ submission ? 'Update Submission' : 'Submit Homework' }}</span>
+                    </button>
+                  </div>
+
+                  <div v-if="submitError" class="error-message">
+                    {{ submitError }}
+                  </div>
+                </form>
+              </div>
+            </div>
+          </section>
         </div>
       </div>
     </div>
@@ -299,9 +257,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { courseService, type Homework, type SubmittedHomework, type Lesson } from '@/services/course.service';
+import { courseService, type Homework, type SubmittedHomework, type Lesson, type Course } from '@/services/course.service';
 import { useAuthStore } from '@/store/auth';
 
 const route = useRoute();
@@ -311,6 +269,7 @@ const authStore = useAuthStore();
 // State
 const homework = ref<Homework | null>(null);
 const lesson = ref<Lesson | null>(null);
+const course = ref<Course | null>(null);
 const submission = ref<SubmittedHomework | null>(null);
 const loading = ref(false);
 const error = ref<string | null>(null);
@@ -324,13 +283,32 @@ const submissionForm = ref({
   description: '',
 });
 
+// Computed
+const isGoogleDocsLink = computed(() => {
+  return homework.value?.homework_url?.includes('docs.google.com') ||
+         homework.value?.homework_url?.includes('drive.google.com');
+});
+
+// Helper function to generate UUID v4
+const generateUUID = () => {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  } else {
+    // Fallback for older browsers or non-secure contexts
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      const r = Math.random() * 16 | 0;
+      const v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+  }
+};
+
 // Methods
 const fetchHomeworkData = async () => {
-  const homeworkId = route.params.homeworkId as string;
   const courseId = route.params.courseId as string;
   const lessonId = route.params.lessonId as string;
 
-  if (!homeworkId || !courseId || !lessonId) {
+  if (!courseId || !lessonId) {
     error.value = 'Invalid route parameters';
     return;
   }
@@ -339,25 +317,54 @@ const fetchHomeworkData = async () => {
   error.value = null;
 
   try {
-    // Fetch homework
-    homework.value = await courseService.getHomework(homeworkId);
+    // Fetch course
+    course.value = await courseService.getCourse(courseId);
 
     // Fetch lesson
     lesson.value = await courseService.getLesson(lessonId);
 
-    // Fetch user's submission
+    // Fetch homework - get the first homework for this lesson
+    const homeworks = await courseService.getLessonHomeworks(lessonId);
+    console.log('Fetched homeworks:', homeworks);
+
+    if (homeworks.length === 0) {
+      throw new Error('No homeworks found for this lesson');
+    }
+
+    // Use the first homework
+    homework.value = homeworks[0];
+
+    console.log('Selected homework:', homework.value);
+    console.log('Homework ID:', homework.value.id);
+    console.log('Homework external ID:', homework.value.external_homework_id);
+
+    // Fetch user's submission if logged in
     const userId = authStore.user?.id;
-    if (userId) {
-      const submissions = await courseService.getUserSubmissions(userId, homeworkId);
-      if (submissions.length > 0) {
-        submission.value = submissions[0];
-        // Pre-fill form with existing submission
-        submissionForm.value = {
-          submitted_homework_url: submission.value.submitted_homework_url,
-          description: submission.value.description || '',
-        };
+    if (userId && homework.value) {
+      try {
+        const submissions = await courseService.getUserSubmissions(userId, homework.value.external_homework_id);
+        if (submissions.length > 0) {
+          submission.value = submissions[0];
+          console.log('Found existing submission:', submission.value);
+          // Pre-fill form with existing submission
+          submissionForm.value = {
+            submitted_homework_url: submission.value.submitted_homework_url,
+            description: submission.value.description || '',
+          };
+        } else {
+          console.log('No existing submission found for this homework');
+        }
+      } catch (err) {
+        console.warn('Failed to fetch submissions:', err);
+        // Don't show error for submission fetch failures
       }
     }
+
+    // Set showSubmissionForm to true if no submission exists
+    if (!submission.value) {
+      showSubmissionForm.value = true;
+    }
+
   } catch (err: any) {
     console.error('Error fetching homework data:', err);
     error.value = err.message || 'Failed to load homework. Please try again.';
@@ -367,64 +374,113 @@ const fetchHomeworkData = async () => {
 };
 
 const submitHomework = async () => {
-  if (!homework.value || !authStore.user?.id) return;
+  if (!homework.value || !authStore.user?.id) {
+    submitError.value = 'Please login to submit homework';
+    return;
+  }
 
   submitting.value = true;
   submitError.value = null;
 
   try {
+    console.log('Homework object:', homework.value);
+    console.log('User ID:', authStore.user.id);
+
+    // Generate a proper UUID for new submissions
+    const externalId = submission.value?.external_submitted_homework_id || generateUUID();
+    console.log('Generated external ID:', externalId);
+
+    // The backend expects the homework_external_id for proper sync
     const submissionData = {
-      external_submitted_homework_id: submission.value?.external_submitted_homework_id ||
-                                     `sub_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      external_submitted_homework_id: externalId,
       user_id: authStore.user.id,
-      homework: homework.value.external_homework_id,
+      homework: homework.value.external_homework_id, // Use external ID for sync compatibility
       submitted_homework_url: submissionForm.value.submitted_homework_url.trim(),
       description: submissionForm.value.description.trim() || undefined,
     };
 
+    console.log('Submitting homework with data:', submissionData);
+
     if (submission.value) {
-      // Update existing submission
-      const updated = await courseService.submitHomework(submissionData);
+      // Update existing submission using PUT to submitted-homeworks endpoint
+      const updated = await courseService.updateHomeworkSubmission(
+        submission.value.external_submitted_homework_id,
+        submissionData
+      );
       submission.value = updated;
+      console.log('Update response:', updated);
     } else {
       // Create new submission
+      console.log('Creating new submission...');
       const newSubmission = await courseService.submitHomework(submissionData);
       submission.value = newSubmission;
+      console.log('Submission created:', newSubmission);
     }
 
     showSubmissionForm.value = false;
     alert(submission.value ? 'Submission updated successfully!' : 'Homework submitted successfully!');
   } catch (err: any) {
     console.error('Error submitting homework:', err);
-    submitError.value = err.message || 'Failed to submit homework. Please try again.';
+
+    // More detailed error message
+    if (err.data) {
+      console.error('Error data:', err.data);
+      if (err.data.homework) {
+        submitError.value = `Homework field error: ${Array.isArray(err.data.homework) ? err.data.homework[0] : err.data.homework}`;
+      } else if (err.data.detail) {
+        submitError.value = err.data.detail;
+      } else if (err.data.error) {
+        submitError.value = err.data.error;
+      } else if (typeof err.data === 'string') {
+        submitError.value = err.data;
+      } else {
+        submitError.value = 'Failed to submit homework. Please check the form data and try again.';
+      }
+    } else {
+      submitError.value = err.message || 'Failed to submit homework. Please try again.';
+    }
   } finally {
     submitting.value = false;
+  }
+};
+
+const cancelEdit = () => {
+  showSubmissionForm.value = false;
+  // Reset form to original submission data
+  if (submission.value) {
+    submissionForm.value = {
+      submitted_homework_url: submission.value.submitted_homework_url,
+      description: submission.value.description || '',
+    };
   }
 };
 
 const formatDate = (dateString?: string) => {
   if (!dateString) return 'Recently';
 
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffTime = Math.abs(now.getTime() - date.getTime());
-  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+  try {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - date.getTime());
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
-  if (diffDays === 0) return 'Today';
-  if (diffDays === 1) return 'Yesterday';
-  if (diffDays < 7) return `${diffDays} days ago`;
-  if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
-  if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`;
-  return `${Math.floor(diffDays / 365)} years ago`;
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays} days ago`;
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+    if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`;
+    return `${Math.floor(diffDays / 365)} years ago`;
+  } catch {
+    return 'Recently';
+  }
 };
 
 const formatInstructions = (text: string) => {
-  if (!text) return '';
+  if (!text) return '<p>No instructions provided.</p>';
 
-  // Replace newlines with <br> and wrap URLs in links
-  return text
-    .replace(/\n/g, '<br>')
-    .replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" class="text-link">$1</a>');
+  // Replace newlines with paragraphs
+  const paragraphs = text.split('\n').filter(p => p.trim());
+  return paragraphs.map(p => `<p>${p}</p>`).join('');
 };
 
 // Lifecycle
@@ -432,6 +488,7 @@ onMounted(() => {
   fetchHomeworkData();
 });
 </script>
+
 
 <style scoped>
 .homework-page {
@@ -614,28 +671,11 @@ onMounted(() => {
 
 .main-content {
   padding: 20px;
-}
-
-.content-grid {
-  display: grid;
-  gap: 32px;
   max-width: 1200px;
   margin: 0 auto;
 }
 
-@media (min-width: 1024px) {
-  .content-grid {
-    grid-template-columns: 2fr 1fr;
-  }
-}
-
-.left-column {
-  display: flex;
-  flex-direction: column;
-  gap: 32px;
-}
-
-.right-column {
+.homework-main-content {
   display: flex;
   flex-direction: column;
   gap: 32px;
@@ -682,59 +722,135 @@ onMounted(() => {
   color: #742a2a;
 }
 
-.details-content {
+.homework-content-wrapper {
   padding: 24px;
 }
 
-.details-card {
+.homework-materials {
+  margin-bottom: 32px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.materials-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.materials-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1a202c;
+  margin: 0;
+}
+
+.external-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #667eea;
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+.external-link:hover {
+  color: #5a67d8;
+  text-decoration: underline;
+}
+
+.docs-warning {
+  display: flex;
+  gap: 16px;
+  padding: 24px;
+  background: #fef3c7;
+  border-bottom: 1px solid #fbbf24;
+}
+
+.warning-icon {
+  color: #d97706;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+.warning-content {
+  flex: 1;
+}
+
+.warning-content p {
+  color: #92400e;
+  margin-bottom: 12px;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.docs-link {
+  display: block;
+  color: #667eea;
+  word-break: break-all;
+  text-decoration: none;
+  font-size: 0.875rem;
+  padding: 8px 12px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+}
+
+.docs-link:hover {
+  text-decoration: underline;
+}
+
+.embed-container {
+  padding: 24px;
+  background: #f8fafc;
+}
+
+.homework-iframe {
+  width: 100%;
+  height: 600px;
+  border: none;
+  border-radius: 8px;
+  background: white;
+}
+
+.no-embed {
+  padding: 40px 20px;
+  text-align: center;
+  color: #64748b;
+  background: #f8fafc;
+  border-radius: 8px;
+}
+
+.instructions-container {
   padding: 24px;
   background: #f8fafc;
   border-radius: 12px;
-  border: 1px solid #e2e8f0;
 }
 
-.details-title {
-  font-size: 1.125rem;
+.instructions-title {
+  font-size: 1.25rem;
   font-weight: 600;
   color: #1a202c;
   margin-bottom: 16px;
 }
 
-.details-text {
+.instructions-content {
   color: #334155;
   line-height: 1.7;
-  margin-bottom: 24px;
 }
 
-.details-text :deep(.text-link) {
-  color: #667eea;
-  text-decoration: none;
+.instructions-content :deep(p) {
+  margin-bottom: 12px;
 }
 
-.details-text :deep(.text-link:hover) {
-  text-decoration: underline;
-}
-
-.assignment-link {
-  margin-top: 24px;
-}
-
-.link-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 20px;
-  background: var(--primary-gradient);
-  color: white;
-  text-decoration: none;
-  border-radius: 8px;
-  font-weight: 500;
-  transition: all 0.3s ease;
-}
-
-.link-btn:hover {
-  transform: translateX(4px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+.instructions-content :deep(p:last-child) {
+  margin-bottom: 0;
 }
 
 .submission-content {
@@ -757,6 +873,8 @@ onMounted(() => {
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 16px;
 }
 
 .submission-info {
@@ -777,10 +895,15 @@ onMounted(() => {
   font-size: 0.875rem;
 }
 
+.submission-actions {
+  display: flex;
+  gap: 8px;
+}
+
 .edit-btn {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   padding: 8px 16px;
   background: white;
   color: #475569;
@@ -805,6 +928,28 @@ onMounted(() => {
 
 .submission-link .link-btn {
   width: fit-content;
+}
+
+.link-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: var(--primary-gradient);
+  color: white;
+  text-decoration: none;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.875rem;
+}
+
+.link-btn:hover {
+  transform: translateX(4px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
 }
 
 .submission-description h4 {
@@ -943,120 +1088,5 @@ onMounted(() => {
   background: #fff5f5;
   border-radius: 8px;
   border: 1px solid #fed7d7;
-}
-
-.resources-content {
-  padding: 24px;
-}
-
-.resource-card {
-  margin-bottom: 24px;
-}
-
-.resource-card:last-child {
-  margin-bottom: 0;
-}
-
-.resource-title {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #1a202c;
-  margin-bottom: 16px;
-}
-
-.resource-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.resource-list li {
-  margin-bottom: 12px;
-}
-
-.resource-list li:last-child {
-  margin-bottom: 0;
-}
-
-.resource-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  color: #667eea;
-  text-decoration: none;
-  font-weight: 500;
-  transition: color 0.3s ease;
-}
-
-.resource-link:hover {
-  color: #5a67d8;
-  text-decoration: underline;
-}
-
-.guidelines-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.guidelines-list li {
-  padding-left: 24px;
-  margin-bottom: 12px;
-  position: relative;
-  color: #334155;
-  line-height: 1.5;
-}
-
-.guidelines-list li:before {
-  content: "•";
-  position: absolute;
-  left: 8px;
-  color: #667eea;
-  font-weight: bold;
-}
-
-.guidelines-list li:last-child {
-  margin-bottom: 0;
-}
-
-.deadline-content {
-  padding: 24px;
-}
-
-.status-card {
-  padding: 24px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 12px;
-  color: white;
-}
-
-.status-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.status-item:last-child {
-  border-bottom: none;
-}
-
-.status-label {
-  font-size: 0.875rem;
-  opacity: 0.9;
-}
-
-.status-value {
-  font-weight: 600;
-  font-size: 1rem;
-}
-
-.status-submitted {
-  color: #c6f6d5;
-}
-
-.status-pending {
-  color: #fed7d7;
 }
 </style>

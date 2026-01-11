@@ -211,21 +211,13 @@ class CourseService {
         try {
             console.log('Creating comment with data:', commentData);
 
-            // Based on your Django models, the serializer expects 'course' to be the internal ID
-            // Let's get all courses first to find the matching internal ID
-            const allCourses = await this.getCourses({ page_size: 100 });
-            const course = allCourses.results.find(c => c.external_course_id === commentData.course);
-
-            if (!course || !course.id) {
-                throw new Error('Course not found or missing internal ID');
-            }
-
-            // Create the comment with the internal course ID
+            // The backend expects course_external_id, not the internal course ID
+            // Based on your Django views.py, the CommentViewSet.create() expects course_external_id
             const commentPayload = {
                 external_comment_id: commentData.external_comment_id,
                 content: commentData.content,
                 user_id: commentData.user_id,
-                course: course.id // Use internal ID
+                course_external_id: commentData.course, // Pass the external course ID directly
             };
 
             console.log('Sending comment payload:', commentPayload);
@@ -297,7 +289,21 @@ class CourseService {
         }
     }
 
-    // Submissions
+    async getHomeworkByExternalId(externalHomeworkId: string): Promise<Homework> {
+        const baseUrl = await this.getRandomCourseReplica();
+        if (!baseUrl) {
+            throw new Error('No course service replicas available');
+        }
+
+        try {
+            return await apiService.get<Homework>(baseUrl, `/homeworks/${externalHomeworkId}/`);
+        } catch (error) {
+            console.error('Failed to fetch homework by external ID:', error);
+            throw error;
+        }
+    }
+
+    // Submissions - FIXED for sync
     async submitHomework(submissionData: Partial<SubmittedHomework>): Promise<SubmittedHomework> {
         const baseUrl = await this.getRandomCourseReplica();
         if (!baseUrl) {
@@ -305,9 +311,73 @@ class CourseService {
         }
 
         try {
-            return await apiService.post<SubmittedHomework>(baseUrl, '/submit-homework/', submissionData);
-        } catch (error) {
+            console.log('Submitting homework to:', baseUrl);
+            console.log('Submission data:', submissionData);
+
+            // For proper sync, we need to use the homework's external ID
+            // Let's get the homework to ensure we have the external ID
+            let homeworkExternalId = submissionData.homework;
+
+            // If homework is an internal ID, fetch the homework to get external ID
+            if (submissionData.homework && !submissionData.homework.includes('-')) {
+                try {
+                    const homework = await this.getHomeworkById(parseInt(submissionData.homework));
+                    homeworkExternalId = homework.external_homework_id;
+                } catch (error) {
+                    console.warn('Could not fetch homework details, using provided ID:', error);
+                }
+            }
+
+            // Make sure we're sending the correct data structure for sync
+            const payload = {
+                external_submitted_homework_id: submissionData.external_submitted_homework_id,
+                user_id: submissionData.user_id,
+                homework_external_id: homeworkExternalId, // Use external ID for sync compatibility
+                submitted_homework_url: submissionData.submitted_homework_url,
+                description: submissionData.description,
+            };
+
+            console.log('Sending payload for sync:', payload);
+
+            // Use the submitted-homeworks endpoint for proper sync handling
+            return await apiService.post<SubmittedHomework>(baseUrl, '/submitted-homeworks/', payload);
+        } catch (error: any) {
             console.error('Failed to submit homework:', error);
+            console.error('Error details:', error.data || error.message);
+            throw error;
+        }
+    }
+
+    // Helper method to get homework by internal ID
+    async getHomeworkById(homeworkId: number): Promise<Homework> {
+        const baseUrl = await this.getRandomCourseReplica();
+        if (!baseUrl) {
+            throw new Error('No course service replicas available');
+        }
+
+        try {
+            // Fetch all homeworks and find by ID
+            const response = await apiService.get<any>(baseUrl, '/homeworks/');
+            const homeworks = normalizePaginatedResponse<Homework>(response).results;
+            const homework = homeworks.find(h => h.id === homeworkId);
+            if (!homework) throw new Error(`Homework with ID ${homeworkId} not found`);
+            return homework;
+        } catch (error) {
+            console.error('Failed to fetch homework by ID:', error);
+            throw error;
+        }
+    }
+
+    async updateHomeworkSubmission(submissionId: string, submissionData: Partial<SubmittedHomework>): Promise<SubmittedHomework> {
+        const baseUrl = await this.getRandomCourseReplica();
+        if (!baseUrl) {
+            throw new Error('No course service replicas available');
+        }
+
+        try {
+            return await apiService.put<SubmittedHomework>(baseUrl, `/submitted-homeworks/${submissionId}/`, submissionData);
+        } catch (error) {
+            console.error('Failed to update homework submission:', error);
             throw error;
         }
     }
@@ -325,6 +395,16 @@ class CourseService {
         } catch (error) {
             console.error('Failed to fetch user submissions:', error);
             throw error;
+        }
+    }
+
+    async getUserSubmissionForHomework(userId: string, homeworkExternalId: string): Promise<SubmittedHomework | null> {
+        try {
+            const submissions = await this.getUserSubmissions(userId, homeworkExternalId);
+            return submissions.length > 0 ? submissions[0] : null;
+        } catch (error) {
+            console.error('Failed to fetch user submission for homework:', error);
+            return null;
         }
     }
 
@@ -356,6 +436,26 @@ class CourseService {
         } catch (error) {
             console.error('Failed to check registration:', error);
             return false;
+        }
+    }
+
+    async registerUserForCourse(userId: string, courseExternalId: string): Promise<CourseRegistration> {
+        const baseUrl = await this.getRandomCourseReplica();
+        if (!baseUrl) {
+            throw new Error('No course service replicas available');
+        }
+
+        try {
+            const registrationData = {
+                user_id: userId,
+                course_external_id: courseExternalId,
+                external_id: `reg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+            };
+
+            return await apiService.post<CourseRegistration>(baseUrl, '/register-user/', registrationData);
+        } catch (error) {
+            console.error('Failed to register user for course:', error);
+            throw error;
         }
     }
 }

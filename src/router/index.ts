@@ -39,7 +39,12 @@ const routes = [
                 path: 'course/:courseId/lesson/:lessonId/homework',
                 name: 'Homework',
                 component: HomeworkView,
-                meta: { title: 'Homework' }
+                meta: { title: 'Homework' },
+                props: (route) => ({
+                    courseId: route.params.courseId,
+                    lessonId: route.params.lessonId,
+                    homeworkId: route.query.homeworkId
+                })
             },
             {
                 path: 'progress',

@@ -465,7 +465,7 @@ const submitComment = async () => {
       external_comment_id: `comment_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       content: newComment.value.trim(),
       user_id: authStore.user.id,
-      course: course.value.external_course_id, // Pass the UUID, service will handle conversion
+      course: course.value.external_course_id, // This is the external course ID
     };
 
     console.log('Submitting comment with data:', commentData);
@@ -502,7 +502,18 @@ const deleteComment = async (commentId: string) => {
 };
 
 const navigateToHomework = (lessonId: string) => {
-  router.push(`/course/${route.params.id}/lesson/${lessonId}/homework`);
+  // Get the first homework for this lesson
+  const lesson = lessons.value.find(l => l.external_lesson_id === lessonId);
+  if (lesson && lesson.homeworks && lesson.homeworks.length > 0) {
+    // Navigate with the first homework ID as query parameter
+    router.push({
+      path: `/course/${route.params.id}/lesson/${lessonId}/homework`,
+      query: { homeworkId: lesson.homeworks[0].external_homework_id }
+    });
+  } else {
+    // If no homework found, still navigate but show error on homework page
+    router.push(`/course/${route.params.id}/lesson/${lessonId}/homework`);
+  }
 };
 
 const formatDate = (dateString?: string) => {
